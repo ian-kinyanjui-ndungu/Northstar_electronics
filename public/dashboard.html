@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>My Dashboard — Northstar Electronics</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"/>
+  <link rel="stylesheet" href="/css/style.css"/>
+  <style>
+    /* topbar = 54px, navbar = var(--nav-height) */
+    --dash-offset: calc(var(--nav-height) + 54px);
+    .dashboard-layout { display: grid; grid-template-columns: 220px 1fr; gap: 32px; align-items: start; padding: 36px 0 60px; }
+    .sidebar {
+      position: sticky;
+      top: calc(var(--nav-height) + 54px + 12px);
+      height: calc(100vh - var(--nav-height) - 54px - 24px);
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+    .sidebar-nav { display: flex; flex-direction: column; gap: 4px; }
+    .sidebar-nav a, .sidebar-nav button {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px; border-radius: var(--radius-sm);
+      font-size: 0.9rem; font-weight: 500; color: var(--color-text-secondary);
+      text-decoration: none; border: none; background: none; cursor: pointer; width: 100%; text-align: left;
+      transition: all var(--transition);
+    }
+    .sidebar-nav a:hover, .sidebar-nav button:hover { background: var(--color-surface); color: var(--color-text); text-decoration: none; }
+    .sidebar-nav a.active { background: var(--color-primary-light); color: var(--color-primary); font-weight: 600; }
+    .sidebar-nav .section-label { font-size: 0.72rem; font-weight: 700; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.6px; padding: 12px 12px 4px; }
+    .main-content {}
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+    .page-header { margin-bottom: 28px; }
+    .page-header h2 { font-size: 1.4rem; margin-bottom: 4px; }
+
+    /* Order cards */
+    .order-card { margin-bottom: 16px; }
+    .order-card-header { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px; }
+    .order-number { font-weight: 700; color: var(--color-text); }
+    .order-meta { font-size: 0.8rem; color: var(--color-text-muted); margin-top: 3px; }
+    .order-items-preview { display: flex; gap: 8px; margin: 16px 0; flex-wrap: wrap; }
+    .order-item-thumb { width: 48px; height: 40px; object-fit: contain; background: var(--color-surface); border-radius: var(--radius-sm); padding: 4px; border: 1px solid var(--color-border); }
+    .order-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    /* Return modal styles */
+    .policy-box { background: var(--color-warning-bg); border: 1px solid #fde68a; border-radius: var(--radius-sm); padding: 14px 16px; margin-bottom: 20px; font-size: 0.875rem; }
+    .policy-box strong { display: block; margin-bottom: 6px; }
+    .policy-box ul { list-style: disc; padding-left: 18px; }
+    .policy-box ul li { margin-bottom: 4px; }
+
+    /* Order tracking timeline */
+    .order-timeline { margin: 20px 0 4px; padding: 0; list-style: none; position: relative; }
+    .order-timeline::before { content: ''; position: absolute; left: 13px; top: 0; bottom: 0; width: 2px; background: var(--color-border); }
+    .tl-step { display: flex; align-items: flex-start; gap: 16px; padding-bottom: 20px; position: relative; }
+    .tl-step:last-child { padding-bottom: 0; }
+    .tl-dot { width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--color-border); background: #fff; display: flex; align-items: center; justify-content: center; flex-shrink: 0; position: relative; z-index: 1; transition: all 0.2s; }
+    .tl-dot.done { background: var(--color-success); border-color: var(--color-success); }
+    .tl-dot.done svg { stroke: #fff; }
+    .tl-dot.current { background: var(--color-primary); border-color: var(--color-primary); }
+    .tl-dot.current svg { stroke: #fff; }
+    .tl-dot svg { width: 14px; height: 14px; stroke: var(--color-border); }
+    .tl-label { padding-top: 4px; }
+    .tl-label strong { font-size: 0.9rem; display: block; }
+    .tl-label span { font-size: 0.78rem; color: var(--color-text-muted); }
+
+    /* Stock checker */
+    .stock-result { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 16px; margin-top: 16px; }
+
+    @media (max-width: 768px) {
+      .dashboard-layout { grid-template-columns: 1fr; }
+      .sidebar { position: static; height: auto; overflow: visible; }
+      .sidebar-nav { flex-direction: row; overflow-x: auto; }
+      .sidebar-nav .section-label { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div id="nav-placeholder"></div>
+
+  <!-- Search topbar -->
+  <div class="dash-topbar" style="position:sticky;top:var(--nav-height);z-index:40;border-bottom:1px solid var(--color-border)">
+    <span class="dash-topbar-title">My Dashboard</span>
+    <div class="dash-search-wrap">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input class="dash-search-input" id="globalSearchInput" placeholder="Search orders, products, returns…" autocomplete="off"
+        oninput="onGlobalSearch()" onfocus="openSearchResults()" />
+      <div class="dash-search-results" id="globalSearchResults"></div>
+    </div>
+    <div style="font-size:0.85rem;font-weight:600;color:var(--color-text-secondary);display:flex;align-items:center;gap:8px">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <span id="topbarName"></span>
+    </div>
+  </div>
+
+  <div class="page-wrapper" id="dashboardWrap" style="display:none">
+    <div class="container">
+      <div class="dashboard-layout">
+
+        <!-- Sidebar -->
+        <aside class="sidebar">
+          <div class="card card-body" style="padding:12px">
+            <div id="userBadge" style="padding:12px 4px;border-bottom:1px solid var(--color-border);margin-bottom:8px">
+              <div style="font-weight:700;font-size:0.95rem" id="sidebarName">Loading…</div>
+              <div style="font-size:0.8rem;color:var(--color-text-muted)" id="sidebarEmail"></div>
+            </div>
+            <nav class="sidebar-nav">
+              <span class="section-label">Account</span>
+              <a href="#" class="active" onclick="showTab('orders', this)" id="tab-orders">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/></svg>
+                My Orders
+              </a>
+              <a href="#" onclick="showTab('returns', this)" id="tab-returns">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>
+                Returns
+              </a>
+              <a href="#" onclick="showTab('stock', this)" id="tab-stock">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                Check Stock
+              </a>
+              <div style="height:1px;background:var(--color-border);margin:8px 0"></div>
+              <a href="/products">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                Browse Products
+              </a>
+              <button onclick="logout()">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                Sign Out
+              </button>
+            </nav>
+          </div>
+        </aside>
+
+        <!-- Main -->
+        <main class="main-content">
+
+          <!-- Orders Tab -->
+          <div class="tab-panel active" id="panel-orders">
+            <div class="page-header">
+              <h2>My Orders</h2>
+              <p class="text-secondary">Track all your Northstar purchases.</p>
+            </div>
+            <div id="ordersList"><div class="loading-overlay"><div class="spinner"></div> Loading orders…</div></div>
+          </div>
+
+          <!-- Returns Tab -->
+          <div class="tab-panel" id="panel-returns">
+            <div class="page-header flex-between" style="flex-wrap:wrap;gap:12px">
+              <div>
+                <h2>My Returns</h2>
+                <p class="text-secondary">Track return requests or apply for a new one.</p>
+              </div>
+              <button class="btn btn-outline btn-sm" onclick="showReturnForm(true)" id="applyReturnBtn">
+                + Apply for a Return
+              </button>
+            </div>
+
+            <!-- Apply for Return inline form -->
+            <div id="returnApplyForm" class="card mb-24" style="display:none">
+              <div class="card-header flex-between">
+                <h3 style="font-size:1rem">New Return Request</h3>
+                <button class="btn btn-ghost btn-sm" onclick="showReturnForm(false)">✕ Close</button>
+              </div>
+              <div class="card-body">
+                <div class="policy-box" style="margin-bottom:20px">
+                  <strong>📋 Return Policy — Please Read Before Submitting</strong>
+                  <ul>
+                    <li>Returns must be requested within <strong>14 days</strong> of the delivery date.</li>
+                    <li>Item must be unused and in its original packaging with all accessories.</li>
+                    <li>Refunds are processed within 5–7 business days after approval.</li>
+                    <li>Shipping costs are non-refundable unless the item arrived damaged or defective.</li>
+                    <li>Digital downloads and opened software are non-returnable.</li>
+                  </ul>
+                </div>
+                <div id="returnFormError" class="alert alert-error hidden mb-16"></div>
+                <div id="returnFormSuccess" class="alert alert-success hidden mb-16"></div>
+                <div class="form-group">
+                  <label class="form-label" for="returnOrderSelect">Select Order to Return *</label>
+                  <select class="form-select" id="returnOrderSelect">
+                    <option value="">— Choose an eligible order —</option>
+                  </select>
+                  <p class="form-error" id="returnEligibilityNote" style="color:var(--color-text-muted);font-weight:400;margin-top:6px"></p>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="returnReasonInline">Reason for Return *</label>
+                  <textarea class="form-textarea" id="returnReasonInline" rows="4" placeholder="Please describe the issue — e.g. item arrived damaged, wrong product received, changed mind…"></textarea>
+                </div>
+                <div style="display:flex;gap:12px;flex-wrap:wrap">
+                  <button class="btn btn-primary" id="submitReturnInlineBtn" onclick="submitReturnInline()">Submit Return Request</button>
+                  <button class="btn btn-ghost" onclick="showReturnForm(false)">Cancel</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Existing returns list -->
+            <div id="returnsList"><div class="loading-overlay"><div class="spinner"></div></div></div>
+          </div>
+
+          <!-- Stock Check Tab -->
+          <div class="tab-panel" id="panel-stock">
+            <div class="page-header">
+              <h2>Check Stock Availability</h2>
+              <p class="text-secondary">Search any product to see its current stock status.</p>
+            </div>
+            <div class="card card-body" style="max-width:560px">
+              <div style="display:flex;gap:10px">
+                <input type="text" class="form-input" id="stockSearch" placeholder="Search product name…" style="flex:1" oninput="debounceStockSearch()"/>
+              </div>
+              <div id="stockResults"></div>
+            </div>
+          </div>
+
+        </main>
+      </div>
+    </div>
+  </div>
+
+  <div id="footer-placeholder"></div>
+
+  <!-- Return Request Modal -->
+  <div class="modal-overlay" id="returnModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Request a Return</h3>
+        <button class="modal-close" onclick="closeReturnModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="policy-box">
+          <strong>📋 Return Policy — Please Read</strong>
+          <ul>
+            <li>Returns must be requested within <strong>14 days</strong> of purchase.</li>
+            <li>Item must be in original condition with all packaging.</li>
+            <li>Refunds are processed within 5–7 business days after approval.</li>
+            <li>Shipping costs are non-refundable unless item is defective.</li>
+          </ul>
+        </div>
+        <div id="returnModalAlert" class="hidden mb-16"></div>
+        <input type="hidden" id="returnOrderId"/>
+        <div class="form-group">
+          <label class="form-label">Order</label>
+          <div id="returnOrderDisplay" style="font-size:0.875rem;color:var(--color-text-secondary);padding:8px 0"></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="returnReason">Reason for Return *</label>
+          <textarea class="form-textarea" id="returnReason" placeholder="Please describe the issue or reason for return…" rows="4"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeReturnModal()">Cancel</button>
+        <button class="btn btn-primary" id="submitReturnBtn" onclick="submitReturn()">Submit Return Request</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/app.js"></script>
+  <script>
+    let orders = [];
+    let stockTimer;
+
+    function showTabTransition() {
+      const bar = document.createElement('div');
+      bar.style.cssText = 'position:fixed;top:0;left:0;width:0;height:3px;background:linear-gradient(90deg,#3b82d4,#7c5cd8);z-index:9999;transition:width 0.4s cubic-bezier(.4,0,.2,1),opacity 0.3s ease;border-radius:0 2px 2px 0;';
+      document.body.appendChild(bar);
+      requestAnimationFrame(() => { requestAnimationFrame(() => { bar.style.width = '100%'; }); });
+      setTimeout(() => { bar.style.opacity = '0'; setTimeout(() => bar.remove(), 300); }, 450);
+    }
+
+    function showTab(tab, el) {
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.sidebar-nav a').forEach(a => a.classList.remove('active'));
+      document.getElementById('panel-' + tab).classList.add('active');
+      if (el) el.classList.add('active');
+      showTabTransition();
+      if (tab === 'returns') loadReturns();
+    }
+
+    async function loadOrders() {
+      try {
+        orders = await api('/orders');
+        const el = document.getElementById('ordersList');
+        if (!orders.length) {
+          el.innerHTML = `<div class="empty-state">
+            <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/></svg>
+            <h3>No orders yet</h3><p>Browse our products and place your first order.</p>
+            <a href="/products" class="btn btn-primary">Shop Now</a></div>`;
+          return;
+        }
+        el.innerHTML = orders.map(o => renderOrderCard(o)).join('');
+      } catch(e) {
+        document.getElementById('ordersList').innerHTML = '<p class="text-error">Could not load orders.</p>';
+      }
+    }
+
+    function renderOrderCard(o) {
+      const today = new Date();
+      const purchaseDate = new Date(o.createdAt);
+      const daysSince = Math.floor((today - purchaseDate) / (1000 * 60 * 60 * 24));
+      const canReturn = o.status === 'Delivered' && daysSince <= 14 && !o.returnRequest;
+      const hasReturn = !!o.returnRequest;
+
+      const thumbs = (o.items || []).slice(0, 4).map(i =>
+        `<img class="order-item-thumb" src="${i.product?.image || productImageSVG(i.product?.category)}" alt="${i.product?.name}" onerror="this.src='${productImageSVG()}'"/>`
+      ).join('');
+
+      return `
+      <div class="card order-card">
+        <div class="card-body">
+          <div class="order-card-header">
+            <div>
+              <div class="order-number">Order #${o.id}</div>
+              <div class="order-meta">${formatDate(o.createdAt)} · ${(o.items||[]).length} item${o.items?.length !== 1 ? 's' : ''} · ${formatCurrency(o.total)}</div>
+            </div>
+            ${statusBadge(o.status)}
+          </div>
+          <div class="order-items-preview">${thumbs}</div>
+          <div class="order-actions">
+            <button class="btn btn-outline btn-sm" onclick="toggleOrderDetail(${o.id})">View Details</button>
+            ${canReturn ? `<button class="btn btn-sm" style="background:var(--color-warning-bg);color:var(--color-warning);border:1px solid #fde68a" onclick="openReturnModal(${o.id})">Request Return</button>` : ''}
+            ${hasReturn ? `<span class="badge badge-amber">Return ${o.returnRequest.status}</span>` : ''}
+            ${o.status === 'Delivered' && daysSince > 14 ? '<span style="font-size:0.78rem;color:var(--color-text-muted)">Return window expired</span>' : ''}
+          </div>
+        </div>
+        <div id="detail-${o.id}" style="display:none;border-top:1px solid var(--color-border)">
+          <div class="card-body">
+            ${renderOrderTimeline(o.status)}
+            <div class="table-wrap" style="margin-top:20px">
+              <table>
+                <thead><tr><th>Product</th><th>Qty</th><th>Unit Price</th><th>Total</th></tr></thead>
+                <tbody>
+                  ${(o.items || []).map(i => `<tr>
+                    <td><a href="/product/${i.productId}">${i.product?.name || '—'}</a></td>
+                    <td>${i.quantity}</td>
+                    <td>${formatCurrency(i.unitPrice)}</td>
+                    <td>${formatCurrency(i.unitPrice * i.quantity)}</td>
+                  </tr>`).join('')}
+                </tbody>
+              </table>
+            </div>
+            <div style="margin-top:14px;font-size:0.875rem;color:var(--color-text-secondary)">
+              <strong>Shipping to:</strong> ${o.shippingAddress || '—'}
+            </div>
+          </div>
+        </div>
+      </div>`;
+    }
+
+    const ORDER_STEPS = [
+      { key: 'Processing', label: 'Order Placed', sub: 'Your order is being prepared', icon: '<polyline points="20 6 9 17 4 12"/>' },
+      { key: 'Shipped', label: 'Shipped', sub: 'On its way to the carrier', icon: '<rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>' },
+      { key: 'Out for Delivery', label: 'Out for Delivery', sub: 'Your package is on its way', icon: '<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>' },
+      { key: 'Delivered', label: 'Delivered', sub: 'Package delivered successfully', icon: '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>' },
+    ];
+
+    function renderOrderTimeline(currentStatus) {
+      if (currentStatus === 'Cancelled') {
+        return `<div class="alert alert-error" style="margin-bottom:0"><strong>Order Cancelled</strong> — This order was cancelled and will not be fulfilled.</div>`;
+      }
+      const currentIdx = ORDER_STEPS.findIndex(s => s.key === currentStatus);
+      return `
+        <div>
+          <p style="font-size:0.8rem;font-weight:600;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:12px">Order Progress</p>
+          <ul class="order-timeline">
+            ${ORDER_STEPS.map((step, i) => {
+              const done = i < currentIdx;
+              const current = i === currentIdx;
+              return `<li class="tl-step">
+                <div class="tl-dot ${done ? 'done' : current ? 'current' : ''}">
+                  <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5">${step.icon}</svg>
+                </div>
+                <div class="tl-label">
+                  <strong style="${current ? 'color:var(--color-primary)' : done ? 'color:var(--color-success)' : 'color:var(--color-text-muted)'}">${step.label}</strong>
+                  <span>${step.sub}</span>
+                </div>
+              </li>`;
+            }).join('')}
+          </ul>
+        </div>`;
+    }
+
+    function toggleOrderDetail(id) {
+      const el = document.getElementById('detail-' + id);
+      el.style.display = el.style.display === 'none' ? 'block' : 'none';
+    }
+
+    function showReturnForm(show) {
+      const form = document.getElementById('returnApplyForm');
+      form.style.display = show ? 'block' : 'none';
+      if (show) {
+        populateReturnOrderDropdown();
+        document.getElementById('returnFormError').classList.add('hidden');
+        document.getElementById('returnFormSuccess').classList.add('hidden');
+        document.getElementById('returnReasonInline').value = '';
+        document.getElementById('returnOrderSelect').value = '';
+        document.getElementById('returnEligibilityNote').textContent = '';
+        form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+
+    function populateReturnOrderDropdown() {
+      const sel = document.getElementById('returnOrderSelect');
+      const today = new Date();
+      // Eligible: Delivered, within 14 days, no existing return
+      const eligible = orders.filter(o => {
+        const days = Math.floor((today - new Date(o.createdAt)) / 86400000);
+        return o.status === 'Delivered' && days <= 14 && !o.returnRequest;
+      });
+      sel.innerHTML = '<option value="">— Choose an eligible order —</option>';
+      if (!eligible.length) {
+        sel.innerHTML += '<option disabled>No eligible orders (must be Delivered within 14 days)</option>';
+      } else {
+        eligible.forEach(o => {
+          const days = Math.floor((today - new Date(o.createdAt)) / 86400000);
+          const remaining = 14 - days;
+          sel.innerHTML += `<option value="${o.id}">Order #${o.id} — ${formatDate(o.createdAt)} — ${formatCurrency(o.total)} (${remaining} day${remaining !== 1 ? 's' : ''} left to return)</option>`;
+        });
+      }
+      sel.onchange = function() {
+        const note = document.getElementById('returnEligibilityNote');
+        if (!this.value) { note.textContent = ''; return; }
+        const o = orders.find(x => x.id === parseInt(this.value));
+        if (o) {
+          const days = Math.floor((today - new Date(o.createdAt)) / 86400000);
+          note.textContent = `Ordered ${days} day${days !== 1 ? 's' : ''} ago — ${o.items?.length || 0} item(s) in this order.`;
+        }
+      };
+    }
+
+    async function submitReturnInline() {
+      const btn = document.getElementById('submitReturnInlineBtn');
+      const errorEl = document.getElementById('returnFormError');
+      const successEl = document.getElementById('returnFormSuccess');
+      errorEl.classList.add('hidden');
+      successEl.classList.add('hidden');
+
+      const orderId = parseInt(document.getElementById('returnOrderSelect').value);
+      const reason = document.getElementById('returnReasonInline').value.trim();
+
+      if (!orderId) {
+        errorEl.textContent = 'Please select an order to return.';
+        errorEl.classList.remove('hidden');
+        return;
+      }
+      if (!reason || reason.length < 10) {
+        errorEl.textContent = 'Please provide a detailed reason (at least 10 characters).';
+        errorEl.classList.remove('hidden');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = '<div class="spinner"></div> Submitting…';
+
+      try {
+        await api('/returns', { method: 'POST', body: JSON.stringify({ orderId, reason }) });
+        successEl.textContent = '✓ Return request submitted! We\'ll review it within 1–2 business days.';
+        successEl.classList.remove('hidden');
+        document.getElementById('returnReasonInline').value = '';
+        document.getElementById('returnOrderSelect').value = '';
+        Toast.show('Return request submitted!', 'success');
+        await loadOrders();
+        await loadReturns();
+        setTimeout(() => showReturnForm(false), 2500);
+      } catch(err) {
+        errorEl.textContent = err.message || 'Failed to submit return request.';
+        errorEl.classList.remove('hidden');
+      }
+      btn.disabled = false;
+      btn.innerHTML = 'Submit Return Request';
+    }
+
+    async function loadReturns() {
+      try {
+        const returns = await api('/returns');
+        const el = document.getElementById('returnsList');
+        if (!returns.length) {
+          el.innerHTML = `<div class="empty-state">
+            <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>
+            <h3>No return requests yet</h3>
+            <p>Eligible orders can be returned within 14 days of delivery.</p>
+            <button class="btn btn-outline" onclick="showReturnForm(true)">Apply for a Return</button>
+          </div>`;
+          return;
+        }
+        el.innerHTML = returns.map(r => `
+          <div class="card mb-16">
+            <div class="card-body">
+              <div class="flex-between" style="flex-wrap:wrap;gap:10px;margin-bottom:12px">
+                <div>
+                  <div style="font-weight:700">Return #${r.id} <span style="font-weight:400;color:var(--color-text-muted);font-size:0.85rem">· Order #${r.orderId}</span></div>
+                  <div style="font-size:0.8rem;color:var(--color-text-muted);margin-top:3px">Submitted ${formatDate(r.createdAt)}</div>
+                </div>
+                ${statusBadge(r.status)}
+              </div>
+              <div style="background:var(--color-surface);border-radius:var(--radius-sm);padding:12px;font-size:0.875rem;color:var(--color-text-secondary);border:1px solid var(--color-border-light)">
+                <strong style="color:var(--color-text);display:block;margin-bottom:4px;font-size:0.8rem;text-transform:uppercase;letter-spacing:0.4px">Return Reason</strong>
+                ${r.reason}
+              </div>
+              ${r.status === 'Approved' ? `<div class="alert alert-success mt-12" style="margin:12px 0 0">Your return has been approved. Please ship the item back within 7 days. Refund will be processed once received.</div>` : ''}
+              ${r.status === 'Rejected' ? `<div class="alert alert-error mt-12" style="margin:12px 0 0">This return was not approved. Please contact support if you have questions.</div>` : ''}
+              ${r.status === 'Refunded' ? `<div class="alert alert-success mt-12" style="margin:12px 0 0">✓ Your refund has been processed. Please allow 5–7 business days for it to appear.</div>` : ''}
+            </div>
+          </div>`).join('');
+      } catch(e) {
+        document.getElementById('returnsList').innerHTML = '<p class="text-error">Could not load returns.</p>';
+      }
+    }
+
+    let stockSearchTimer;
+    function debounceStockSearch() {
+      clearTimeout(stockSearchTimer);
+      stockSearchTimer = setTimeout(doStockSearch, 350);
+    }
+
+    async function doStockSearch() {
+      const q = document.getElementById('stockSearch').value.trim();
+      const el = document.getElementById('stockResults');
+      if (!q) { el.innerHTML = ''; return; }
+      el.innerHTML = '<div style="padding:16px;text-align:center"><div class="spinner"></div></div>';
+      try {
+        const { rows } = await api(`/products?search=${encodeURIComponent(q)}&limit=8`);
+        if (!rows.length) { el.innerHTML = '<div class="stock-result"><p class="text-muted">No products found.</p></div>'; return; }
+        el.innerHTML = rows.map(p => `
+          <div class="stock-result" style="margin-bottom:8px">
+            <div class="flex-between">
+              <div>
+                <div style="font-weight:600;font-size:0.9rem"><a href="/product/${p.id}">${p.name}</a></div>
+                <div style="font-size:0.8rem;color:var(--color-text-muted)">${p.category}</div>
+              </div>
+              <div style="text-align:right">
+                <span class="stock-badge ${p.stock > 0 ? 'in-stock' : 'out-of-stock'}">${p.stock > 0 ? `● In Stock (${p.stock} left)` : '● Out of Stock'}</span>
+                <div style="font-size:0.8rem;color:var(--color-text-muted);margin-top:3px">${formatCurrency(p.price)}</div>
+              </div>
+            </div>
+          </div>`).join('');
+      } catch(e) {
+        el.innerHTML = '<p class="text-error">Search failed.</p>';
+      }
+    }
+
+    function openReturnModal(orderId) {
+      const order = orders.find(o => o.id === orderId);
+      document.getElementById('returnOrderId').value = orderId;
+      document.getElementById('returnOrderDisplay').textContent = `Order #${orderId} — ${formatDate(order?.createdAt)} — ${formatCurrency(order?.total)}`;
+      document.getElementById('returnReason').value = '';
+      document.getElementById('returnModalAlert').className = 'hidden mb-16';
+      document.getElementById('returnModal').classList.add('open');
+    }
+
+    function closeReturnModal() {
+      document.getElementById('returnModal').classList.remove('open');
+    }
+
+    async function submitReturn() {
+      const btn = document.getElementById('submitReturnBtn');
+      const alertEl = document.getElementById('returnModalAlert');
+      const orderId = document.getElementById('returnOrderId').value;
+      const reason = document.getElementById('returnReason').value.trim();
+
+      if (!reason) {
+        alertEl.className = 'alert alert-error mb-16';
+        alertEl.textContent = 'Please provide a reason for the return.';
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = '<div class="spinner"></div> Submitting…';
+
+      try {
+        await api('/returns', { method: 'POST', body: JSON.stringify({ orderId: parseInt(orderId), reason }) });
+        closeReturnModal();
+        Toast.show('Return request submitted successfully!', 'success');
+        await loadOrders();
+      } catch(err) {
+        alertEl.className = 'alert alert-error mb-16';
+        alertEl.textContent = err.message || 'Failed to submit return request.';
+        btn.disabled = false;
+        btn.innerHTML = 'Submit Return Request';
+      }
+    }
+
+    // ── Global search ──────────────────────────────────────────────────────────
+    let searchTimer;
+    function onGlobalSearch() {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(runGlobalSearch, 280);
+    }
+    function openSearchResults() {
+      const q = document.getElementById('globalSearchInput').value.trim();
+      if (q) runGlobalSearch();
+    }
+    async function runGlobalSearch() {
+      const q = document.getElementById('globalSearchInput').value.trim();
+      const box = document.getElementById('globalSearchResults');
+      if (!q) { box.classList.remove('open'); return; }
+      box.classList.add('open');
+      box.innerHTML = '<div class="dash-sr-empty">Searching…</div>';
+
+      try {
+        // Search orders by id/status
+        const matchOrders = orders.filter(o =>
+          String(o.id).includes(q) ||
+          (o.status || '').toLowerCase().includes(q.toLowerCase()) ||
+          (o.items || []).some(i => (i.product?.name || '').toLowerCase().includes(q.toLowerCase()))
+        ).slice(0, 4);
+
+        // Search products live
+        let matchProducts = [];
+        try {
+          const { rows } = await api(`/products?search=${encodeURIComponent(q)}&limit=5`);
+          matchProducts = rows || [];
+        } catch(e) {}
+
+        let html = '';
+
+        if (matchOrders.length) {
+          html += `<div class="dash-sr-section">My Orders</div>`;
+          html += matchOrders.map(o => `
+            <a class="dash-sr-item" href="#" onclick="showTab('orders',document.getElementById('tab-orders'));setTimeout(()=>toggleOrderDetail(${o.id}),100);document.getElementById('globalSearchResults').classList.remove('open');return false;">
+              <div class="dash-sr-icon"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/></svg></div>
+              <div class="dash-sr-main"><div class="dash-sr-label">Order #${o.id}</div><div class="dash-sr-sub">${formatDate(o.createdAt)} · ${formatCurrency(o.total)}</div></div>
+              <div class="dash-sr-badge">${statusBadge(o.status)}</div>
+            </a>`).join('');
+        }
+
+        if (matchProducts.length) {
+          html += `<div class="dash-sr-section">Products</div>`;
+          html += matchProducts.map(p => `
+            <a class="dash-sr-item" href="/product/${p.id}">
+              <div class="dash-sr-icon"><img src="${p.image || productImageSVG(p.category)}" style="width:28px;height:24px;object-fit:contain;" onerror="this.src='${productImageSVG()}'"/></div>
+              <div class="dash-sr-main"><div class="dash-sr-label">${p.name}</div><div class="dash-sr-sub">${p.category} · ${formatCurrency(p.price)}</div></div>
+              <div class="dash-sr-badge"><span class="${p.stock > 0 ? 'badge badge-green' : 'badge badge-red'}">${p.stock > 0 ? 'In Stock' : 'Out of Stock'}</span></div>
+            </a>`).join('');
+        }
+
+        if (!html) html = `<div class="dash-sr-empty">No results for "<strong>${q}</strong>"</div>`;
+        box.innerHTML = html;
+      } catch(e) {
+        box.innerHTML = '<div class="dash-sr-empty">Search unavailable.</div>';
+      }
+    }
+
+    // Close search on outside click
+    document.addEventListener('click', e => {
+      if (!e.target.closest('.dash-search-wrap')) {
+        document.getElementById('globalSearchResults')?.classList.remove('open');
+      }
+    });
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (!Auth.isLoggedIn()) { window.location.href = '/login?redirect=/dashboard'; return; }
+      document.getElementById('dashboardWrap').style.display = 'block';
+      const user = Auth.getUser();
+      document.getElementById('sidebarName').textContent = user?.name || '';
+      document.getElementById('sidebarEmail').textContent = user?.email || '';
+      document.getElementById('topbarName').textContent = user?.name || '';
+      document.title = `Dashboard — ${user?.name || 'My Account'}`;
+      await loadOrders();
+    });
+  </script>
+</body>
+</html>

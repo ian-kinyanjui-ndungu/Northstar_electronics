@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Checkout — Northstar Electronics</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"/>
+  <link rel="stylesheet" href="/css/style.css"/>
+  <style>
+    .checkout-layout { display: grid; grid-template-columns: 1fr 360px; gap: 36px; padding: 40px 0; }
+    .checkout-section { margin-bottom: 32px; }
+    .checkout-section h3 { font-size: 1rem; font-weight: 700; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid var(--color-border); }
+    .order-item { display: flex; gap: 12px; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--color-border-light); }
+    .order-item:last-child { border-bottom: none; }
+    .order-item img { width: 52px; height: 42px; object-fit: contain; background: var(--color-surface); border-radius: var(--radius-sm); padding: 4px; border: 1px solid var(--color-border); }
+    .order-item-name { font-size: 0.875rem; font-weight: 600; flex: 1; }
+    .order-item-qty { font-size: 0.8rem; color: var(--color-text-muted); }
+    .order-item-price { font-size: 0.9rem; font-weight: 700; }
+    .summary-row { display: flex; justify-content: space-between; font-size: 0.9rem; padding: 8px 0; }
+    .summary-row.total { font-weight: 700; font-size: 1.05rem; padding-top: 12px; border-top: 2px solid var(--color-border); }
+    @media (max-width: 768px) { .checkout-layout { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div id="nav-placeholder"></div>
+  <div class="page-wrapper" id="authGate" style="display:none">
+    <div class="container">
+      <div style="padding-top:32px">
+        <div class="breadcrumb"><a href="/">Home</a> › <a href="/cart">Cart</a> › <span>Checkout</span></div>
+        <h1 style="margin-bottom:4px">Checkout</h1>
+        <p class="text-secondary">Complete your order below.</p>
+      </div>
+      <div id="stockAlert" class="alert alert-error mt-16 hidden"></div>
+      <div class="checkout-layout">
+        <div>
+          <!-- Shipping -->
+          <div class="checkout-section">
+            <h3>Shipping Address</h3>
+            <div class="form-group">
+              <label class="form-label">Full Name</label>
+              <input type="text" class="form-input" id="shipName" placeholder="Alex Johnson"/>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Street Address</label>
+              <input type="text" class="form-input" id="shipStreet" placeholder="123 Main Street"/>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 120px;gap:12px">
+              <div class="form-group"><label class="form-label">City</label><input type="text" class="form-input" id="shipCity" placeholder="San Francisco"/></div>
+              <div class="form-group"><label class="form-label">State</label><input type="text" class="form-input" id="shipState" placeholder="CA"/></div>
+              <div class="form-group"><label class="form-label">ZIP</label><input type="text" class="form-input" id="shipZip" placeholder="94102"/></div>
+            </div>
+          </div>
+
+          <!-- Payment (demo) -->
+          <div class="checkout-section">
+            <h3>Payment</h3>
+            <div class="alert alert-info" style="margin-bottom:16px">
+              <strong>Demo mode:</strong> No real payment is processed. Use any card number below.
+            </div>
+            <div class="form-group"><label class="form-label">Card Number</label><input type="text" class="form-input" placeholder="4242 4242 4242 4242" maxlength="19" oninput="formatCard(this)"/></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+              <div class="form-group"><label class="form-label">Expiry</label><input type="text" class="form-input" placeholder="MM/YY" maxlength="5"/></div>
+              <div class="form-group"><label class="form-label">CVV</label><input type="text" class="form-input" placeholder="123" maxlength="4"/></div>
+            </div>
+          </div>
+
+          <div id="formError" class="alert alert-error hidden mb-16"></div>
+          <button class="btn btn-primary btn-lg btn-block" id="placeOrderBtn" onclick="placeOrder()">
+            Place Order
+          </button>
+        </div>
+
+        <!-- Order Summary -->
+        <aside>
+          <div class="card" style="position:sticky;top:calc(var(--nav-height) + 20px)">
+            <div class="card-header"><h3 style="font-size:1rem">Your Order</h3></div>
+            <div class="card-body">
+              <div id="orderItemsList"></div>
+              <div id="orderSummaryRows" style="margin-top:12px"></div>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </div>
+
+  <div id="footer-placeholder"></div>
+  <script src="/js/app.js"></script>
+  <script>
+    function requireAuth() {
+      if (!Auth.isLoggedIn()) {
+        window.location.href = '/login?redirect=/checkout';
+        return false;
+      }
+      return true;
+    }
+
+    function renderOrderSummary() {
+      const items = Cart.get();
+      if (!items.length) { window.location.href = '/cart'; return; }
+
+      const subtotal = Cart.subtotal();
+      const shipping = subtotal >= 99 ? 0 : 9.99;
+      const total = subtotal + shipping;
+
+      document.getElementById('orderItemsList').innerHTML = items.map(i => `
+        <div class="order-item">
+          <img src="${i.image || productImageSVG()}" alt="${i.name}" onerror="this.src='${productImageSVG()}'"/>
+          <div class="order-item-name">${i.name}<div class="order-item-qty">× ${i.quantity}</div></div>
+          <div class="order-item-price">${formatCurrency(i.price * i.quantity)}</div>
+        </div>`).join('');
+
+      document.getElementById('orderSummaryRows').innerHTML = `
+        <div class="summary-row"><span>Subtotal</span><span>${formatCurrency(subtotal)}</span></div>
+        <div class="summary-row"><span>Shipping</span><span>${shipping === 0 ? 'Free' : formatCurrency(shipping)}</span></div>
+        <div class="summary-row total"><span>Total</span><span>${formatCurrency(total)}</span></div>`;
+    }
+
+    function formatCard(input) {
+      let v = input.value.replace(/\D/g, '').substring(0, 16);
+      input.value = v.replace(/(.{4})/g, '$1 ').trim();
+    }
+
+    async function placeOrder() {
+      const btn = document.getElementById('placeOrderBtn');
+      const errorEl = document.getElementById('formError');
+      errorEl.classList.add('hidden');
+
+      const name = document.getElementById('shipName').value.trim();
+      const street = document.getElementById('shipStreet').value.trim();
+      const city = document.getElementById('shipCity').value.trim();
+      const state = document.getElementById('shipState').value.trim();
+      const zip = document.getElementById('shipZip').value.trim();
+
+      if (!name || !street || !city || !state || !zip) {
+        errorEl.textContent = 'Please complete all shipping fields.';
+        errorEl.classList.remove('hidden');
+        return;
+      }
+
+      const shippingAddress = `${name}, ${street}, ${city}, ${state} ${zip}`;
+      const cartItems = Cart.get();
+
+      btn.disabled = true;
+      btn.innerHTML = '<div class="spinner"></div> Processing…';
+
+      try {
+        // Validate stock first
+        const validation = await api('/cart/validate', {
+          method: 'POST',
+          body: JSON.stringify({ items: cartItems.map(i => ({ productId: i.productId, quantity: i.quantity })) }),
+        });
+
+        if (!validation.valid) {
+          const msg = validation.issues.map(i => `${i.name || 'Item'}: ${i.error}`).join('; ');
+          document.getElementById('stockAlert').textContent = `Stock issue: ${msg}`;
+          document.getElementById('stockAlert').classList.remove('hidden');
+          btn.disabled = false;
+          btn.innerHTML = 'Place Order';
+          return;
+        }
+
+        const order = await api('/orders', {
+          method: 'POST',
+          body: JSON.stringify({
+            items: cartItems.map(i => ({ productId: i.productId, quantity: i.quantity })),
+            shippingAddress,
+          }),
+        });
+
+        Cart.clear();
+        window.location.href = `/order-confirmation?orderId=${order.id}`;
+      } catch (err) {
+        errorEl.textContent = err.message || 'Checkout failed. Please try again.';
+        errorEl.classList.remove('hidden');
+        btn.disabled = false;
+        btn.innerHTML = 'Place Order';
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      if (!requireAuth()) return;
+      document.getElementById('authGate').style.display = 'block';
+      // Pre-fill name
+      const user = Auth.getUser();
+      if (user) document.getElementById('shipName').value = user.name;
+      renderOrderSummary();
+    });
+  </script>
+</body>
+</html>

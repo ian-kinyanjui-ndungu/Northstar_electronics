@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sell on Northstar — Become a Seller</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"/>
+  <link rel="stylesheet" href="/css/style.css"/>
+  <style>
+    .seller-hero { background: linear-gradient(135deg, #0f2044 0%, #1e40af 100%); padding: 80px 0; color: #fff; text-align: center; }
+    .seller-hero h1 { color: #fff; font-size: clamp(2rem,4vw,3rem); margin-bottom: 16px; }
+    .seller-hero p { color: rgba(255,255,255,0.8); font-size: 1.1rem; max-width: 540px; margin: 0 auto 36px; }
+    .steps-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(220px,1fr)); gap: 24px; margin: 48px 0; }
+    .step-card { background: #fff; border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 28px; text-align: center; }
+    .step-num { width: 40px; height: 40px; border-radius: 50%; background: var(--color-primary-light); color: var(--color-primary); font-weight: 800; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; }
+    .perks-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(200px,1fr)); gap: 20px; }
+    .perk-card { background: var(--color-surface); border-radius: var(--radius-md); padding: 20px; }
+    .perk-card h4 { margin-bottom: 6px; }
+    .perk-card p { font-size: 0.875rem; color: var(--color-text-secondary); margin: 0; }
+  </style>
+</head>
+<body>
+  <div id="nav-placeholder"></div>
+
+  <div class="seller-hero">
+    <div class="container">
+      <h1>Grow your business with Northstar</h1>
+      <p>Join thousands of sellers reaching millions of tech-savvy customers. Set up your store in minutes.</p>
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+        <a href="/seller/register" class="btn" style="background:#fff;color:var(--color-primary);padding:14px 28px;font-size:1rem">Start Selling Today</a>
+        <a href="/seller/dashboard" class="btn" style="border:1.5px solid rgba(255,255,255,0.4);color:#fff;padding:14px 28px;font-size:1rem">Seller Dashboard</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-wrapper">
+    <div class="container">
+      <div class="section">
+        <h2 class="text-center" style="margin-bottom:8px">How it works</h2>
+        <p class="text-center text-secondary mb-32">Three simple steps to start selling</p>
+        <div class="steps-grid">
+          <div class="step-card"><div class="step-num">1</div><h3 style="margin-bottom:8px">Register</h3><p class="text-secondary" style="font-size:0.875rem">Create your seller account and complete verification (KYC)</p></div>
+          <div class="step-card"><div class="step-num">2</div><h3 style="margin-bottom:8px">List Products</h3><p class="text-secondary" style="font-size:0.875rem">Add your products with photos, descriptions, and pricing</p></div>
+          <div class="step-card"><div class="step-num">3</div><h3 style="margin-bottom:8px">Start Selling</h3><p class="text-secondary" style="font-size:0.875rem">Receive orders, ship products, and get paid to your wallet</p></div>
+        </div>
+
+        <h2 style="margin-bottom:8px;margin-top:24px">Why sell on Northstar?</h2>
+        <p class="text-secondary mb-32">Built for serious sellers who want results</p>
+        <div class="perks-grid">
+          <div class="perk-card"><h4>📦 Huge Reach</h4><p>Access to thousands of daily active tech shoppers already on the platform</p></div>
+          <div class="perk-card"><h4>💰 Competitive Fees</h4><p>Low commission rates starting at 10%. More you sell, more you keep</p></div>
+          <div class="perk-card"><h4>📊 Seller Analytics</h4><p>Full dashboard with sales, revenue, product and customer analytics</p></div>
+          <div class="perk-card"><h4>💳 Fast Payouts</h4><p>Withdraw your earnings to your bank account within 2-3 business days</p></div>
+          <div class="perk-card"><h4>🛡 Seller Protection</h4><p>Dispute resolution and fraud protection for all verified sellers</p></div>
+          <div class="perk-card"><h4>🌟 Brand Storefront</h4><p>Your own branded storefront page that customers can browse and follow</p></div>
+        </div>
+
+        <div style="text-align:center;margin-top:56px;padding:48px;background:var(--color-surface);border-radius:var(--radius-xl);border:1px solid var(--color-border)">
+          <h2 style="margin-bottom:12px">Ready to get started?</h2>
+          <p class="text-secondary mb-24">Join Northstar Marketplace today. No monthly fees — only pay when you sell.</p>
+          <a href="/seller/register" class="btn btn-primary btn-lg">Create Seller Account</a>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="footer-placeholder"></div>
+  <script src="/js/app.js"></script>
+</body>
+</html>

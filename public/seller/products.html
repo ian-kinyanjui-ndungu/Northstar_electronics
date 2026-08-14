@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>My Products — Seller Portal</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"/>
+  <link rel="stylesheet" href="/css/style.css"/>
+  <style>
+    .product-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media(max-width:600px) { .product-form-grid { grid-template-columns: 1fr; } }
+    .approval-banner { display: flex; align-items: flex-start; gap: 14px; background: var(--color-warning-bg); border: 1px solid #fde68a; border-radius: var(--radius-md); padding: 16px 20px; margin-bottom: 24px; }
+    .approval-banner svg { flex-shrink: 0; color: var(--color-warning); margin-top: 2px; }
+    .approval-banner strong { display: block; margin-bottom: 3px; color: var(--color-warning); }
+    .approval-banner p { font-size: 0.875rem; color: var(--color-text-secondary); margin: 0; }
+    .approval-pill { display: inline-flex; align-items: center; gap: 5px; font-size: 0.75rem; font-weight: 700; padding: 3px 10px; border-radius: 9999px; white-space: nowrap; }
+    .pill-pending  { background: #fffbeb; color: #d97706; border: 1px solid #fde68a; }
+    .pill-approved { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
+    .pill-rejected { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+  </style>
+</head>
+<body>
+  <div id="nav-placeholder"></div>
+  <div id="sellerWrap" style="display:none">
+    <div class="seller-layout">
+      <aside class="seller-sidebar">
+        <div class="seller-logo"><img src="/images/logo.png" alt="Northstar"/><span class="seller-label">Seller Portal</span></div>
+        <nav class="seller-nav">
+          <span class="nav-section">Dashboard</span>
+          <a href="/seller/dashboard">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            Overview
+          </a>
+          <span class="nav-section">Store</span>
+          <a href="/seller/products" class="active">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+            My Products
+          </a>
+          <a href="/seller/orders">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/></svg>
+            Orders
+          </a>
+          <a href="/seller/wallet">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+            Wallet
+          </a>
+          <a href="/seller/analytics">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+            Analytics
+          </a>
+          <span class="nav-section">Account</span>
+          <a href="/seller/settings">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            Settings
+          </a>
+          <div style="height:1px;background:rgba(255,255,255,0.08);margin:8px 0"></div>
+          <a href="/">← Back to Store</a>
+          <button onclick="logout()">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            Sign Out
+          </button>
+        </nav>
+      </aside>
+
+      <main class="seller-main">
+        <!-- Account status banner — shown if not Active -->
+        <div id="statusBanner" style="display:none"></div>
+
+        <div class="flex-between mb-24" style="flex-wrap:wrap;gap:12px">
+          <div>
+            <h2 style="font-size:1.4rem;margin-bottom:4px">My Products</h2>
+            <p class="text-secondary">Manage your listings — all new products need admin approval before going live.</p>
+          </div>
+          <button class="btn btn-primary" id="addProductBtn" onclick="openProductModal(null)">+ Add Product</button>
+        </div>
+
+        <!-- Info box explaining the flow -->
+        <div class="info-box mb-24" style="background:var(--color-primary-light);border-color:#bfdbfe">
+          <p style="font-size:0.875rem;color:var(--color-primary)">
+            <strong>How product approval works:</strong>
+            When you add or edit a product it enters <strong>Pending</strong> review. Once an admin approves it, it becomes
+            <strong>Approved</strong> and appears in the store. Editing an approved product resets it to Pending until re-approved.
+          </p>
+        </div>
+
+        <div class="card">
+          <div class="table-wrap" id="productsTable">
+            <div class="loading-overlay"><div class="spinner"></div> Loading your products…</div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- Add / Edit Product Modal -->
+  <div class="modal-overlay" id="productModal">
+    <div class="modal" style="max-width:560px">
+      <div class="modal-header">
+        <h3 id="modalTitle">Add Product</h3>
+        <button class="modal-close" onclick="closeModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-info mb-16" style="font-size:0.875rem">
+          Your product will be reviewed by Northstar admin before appearing in the store. This usually takes less than 24 hours.
+        </div>
+        <div id="modalError" class="alert alert-error hidden mb-16"></div>
+        <input type="hidden" id="editId"/>
+        <div class="product-form-grid">
+          <div class="form-group" style="grid-column:1/-1">
+            <label class="form-label">Product Name *</label>
+            <input type="text" id="pName" class="form-input" placeholder="e.g. Dell XPS 15 Laptop"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Category *</label>
+            <select id="pCategory" class="form-select">
+              <option value="">Select…</option>
+              <option>Laptops</option>
+              <option>Desktops</option>
+              <option>Monitors</option>
+              <option>Accessories</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Price ($) *</label>
+            <input type="number" id="pPrice" class="form-input" step="0.01" min="0" placeholder="0.00"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Stock Quantity *</label>
+            <input type="number" id="pStock" class="form-input" min="0" placeholder="0"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Image URL</label>
+            <input type="text" id="pImage" class="form-input" placeholder="https://… or /images/…"/>
+          </div>
+          <div class="form-group" style="grid-column:1/-1">
+            <label class="form-label">Description</label>
+            <textarea id="pDesc" class="form-textarea" rows="4" placeholder="Describe your product — specs, features, condition…"></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+        <button class="btn btn-primary" id="saveBtn" onclick="saveProduct()">Submit for Approval</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="footer-placeholder"></div>
+  <script src="/js/app.js"></script>
+  <script>
+    let myProducts = [];
+    let sellerData = null;
+
+    function approvalPill(status) {
+      const map = {
+        Pending:  { cls: 'pill-pending',  icon: '⏳', label: 'Pending Review' },
+        Approved: { cls: 'pill-approved', icon: '✓',  label: 'Approved — Live' },
+        Rejected: { cls: 'pill-rejected', icon: '✕',  label: 'Rejected' },
+      };
+      const m = map[status] || map.Pending;
+      return `<span class="approval-pill ${m.cls}">${m.icon} ${m.label}</span>`;
+    }
+
+    async function load() {
+      if (!Auth.isLoggedIn()) { window.location.href = '/login?redirect=/seller/products'; return; }
+      document.getElementById('sellerWrap').style.display = 'block';
+
+      try {
+        const data = await api('/sellers/my-products');
+        sellerData = data.seller;
+        myProducts = data.products || [];
+
+        // Show banner if seller not Active
+        const banner = document.getElementById('statusBanner');
+        const addBtn = document.getElementById('addProductBtn');
+
+        if (sellerData.status !== 'Active') {
+          const messages = {
+            Pending: { bg: '#fffbeb', border: '#fde68a', icon: '⏳', title: 'Account Pending Approval', body: 'Your seller account is awaiting admin approval. Once activated, you\'ll be able to add products. Please check back soon or contact support.' },
+            Suspended: { bg: '#fef2f2', border: '#fecaca', icon: '🚫', title: 'Account Suspended', body: 'Your seller account has been suspended. Please contact support@northstar.com to resolve this.' },
+          };
+          const m = messages[sellerData.status] || messages.Pending;
+          banner.style.display = 'flex';
+          banner.innerHTML = `
+            <div class="approval-banner" style="background:${m.bg};border-color:${m.border}">
+              <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              <div><strong>${m.icon} ${m.title}</strong><p>${m.body}</p></div>
+            </div>`;
+          addBtn.disabled = true;
+          addBtn.title = 'Account not yet approved';
+        }
+
+        renderTable();
+      } catch (e) {
+        if (e.status === 404) {
+          document.getElementById('productsTable').innerHTML = `
+            <div style="padding:40px;text-align:center">
+              <p class="text-secondary mb-16">You don't have a seller account yet.</p>
+              <a href="/seller/register" class="btn btn-primary">Register as a Seller</a>
+            </div>`;
+        } else {
+          document.getElementById('productsTable').innerHTML = '<p class="text-error" style="padding:16px">Could not load products.</p>';
+        }
+      }
+    }
+
+    function renderTable() {
+      const tbl = document.getElementById('productsTable');
+      if (!myProducts.length) {
+        tbl.innerHTML = `
+          <div style="padding:48px;text-align:center">
+            <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="margin:0 auto 16px;color:var(--color-text-muted)"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+            <h3 style="margin-bottom:8px">No products yet</h3>
+            <p class="text-secondary mb-16">Add your first product. It will be reviewed by our team before going live.</p>
+            <button class="btn btn-primary" onclick="openProductModal(null)" ${sellerData?.status !== 'Active' ? 'disabled' : ''}>+ Add Your First Product</button>
+          </div>`;
+        return;
+      }
+
+      tbl.innerHTML = `<table>
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th>Category</th>
+            <th>Price</th>
+            <th>Stock</th>
+            <th>Approval Status</th>
+            <th>Store Visibility</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${myProducts.map(p => `
+          <tr>
+            <td>
+              <div style="font-weight:600;max-width:200px">${p.name}</div>
+              <div style="font-size:0.78rem;color:var(--color-text-muted)">ID #${p.id}</div>
+            </td>
+            <td><span class="badge badge-blue">${p.category}</span></td>
+            <td style="font-weight:600">${formatCurrency(p.price)}</td>
+            <td class="${p.stock > 0 ? 'text-success' : 'text-error'} font-bold">${p.stock}</td>
+            <td>${approvalPill(p.approvalStatus)}</td>
+            <td>
+              ${p.approvalStatus === 'Approved'
+                ? '<span class="badge badge-green">● Live</span>'
+                : '<span class="badge badge-gray">Hidden</span>'}
+            </td>
+            <td style="white-space:nowrap">
+              <button class="btn btn-ghost btn-sm" onclick='openProductModal(${JSON.stringify(p).replace(/"/g,"&quot;")})'>Edit</button>
+              <button class="btn btn-danger btn-sm" onclick="deleteProduct(${p.id}, '${p.name.replace(/'/g,"\\'").replace(/"/g,"&quot;")}')">Delete</button>
+            </td>
+          </tr>`).join('')}
+        </tbody>
+      </table>`;
+    }
+
+    function openProductModal(p) {
+      if (sellerData?.status !== 'Active') {
+        Toast.show('Your account must be approved by admin before you can add products.', 'error');
+        return;
+      }
+      document.getElementById('modalTitle').textContent = p ? 'Edit Product' : 'Add Product';
+      document.getElementById('saveBtn').textContent = p ? 'Submit Changes for Approval' : 'Submit for Approval';
+      document.getElementById('editId').value = p?.id || '';
+      document.getElementById('pName').value = p?.name || '';
+      document.getElementById('pCategory').value = p?.category || '';
+      document.getElementById('pPrice').value = p?.price || '';
+      document.getElementById('pStock').value = p?.stock ?? '';
+      document.getElementById('pImage').value = p?.image || '';
+      document.getElementById('pDesc').value = p?.description || '';
+      document.getElementById('modalError').classList.add('hidden');
+      document.getElementById('productModal').classList.add('open');
+    }
+
+    function closeModal() {
+      document.getElementById('productModal').classList.remove('open');
+    }
+
+    async function saveProduct() {
+      const btn = document.getElementById('saveBtn');
+      const errEl = document.getElementById('modalError');
+      errEl.classList.add('hidden');
+
+      const id = document.getElementById('editId').value;
+      const data = {
+        name: document.getElementById('pName').value.trim(),
+        category: document.getElementById('pCategory').value,
+        price: parseFloat(document.getElementById('pPrice').value),
+        stock: parseInt(document.getElementById('pStock').value) || 0,
+        image: document.getElementById('pImage').value.trim() || null,
+        description: document.getElementById('pDesc').value.trim(),
+      };
+
+      if (!data.name || !data.category || isNaN(data.price) || data.price <= 0) {
+        errEl.textContent = 'Name, category, and a valid price are required.';
+        errEl.classList.remove('hidden');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = '<div class="spinner"></div> Submitting…';
+
+      try {
+        if (id) {
+          await api(`/sellers/my-products/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+          Toast.show('Product updated — pending re-approval', 'success');
+        } else {
+          await api('/sellers/my-products', { method: 'POST', body: JSON.stringify(data) });
+          Toast.show('Product submitted for approval!', 'success');
+        }
+        closeModal();
+        await load();
+      } catch (err) {
+        errEl.textContent = err.message || 'Save failed. Please try again.';
+        errEl.classList.remove('hidden');
+      }
+
+      btn.disabled = false;
+      btn.innerHTML = id ? 'Submit Changes for Approval' : 'Submit for Approval';
+    }
+
+    async function deleteProduct(id, name) {
+      if (!confirm(`Delete "${name}"?\n\nThis cannot be undone.`)) return;
+      try {
+        await api(`/sellers/my-products/${id}`, { method: 'DELETE' });
+        Toast.show('Product deleted', 'info');
+        await load();
+      } catch (e) {
+        Toast.show(e.message || 'Delete failed', 'error');
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', load);
+  </script>
+</body>
+</html>

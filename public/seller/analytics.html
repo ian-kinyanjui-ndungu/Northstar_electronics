@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Analytics — Seller Portal</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"/>
+  <link rel="stylesheet" href="/css/style.css"/>
+  <style>
+    .bar-chart { display: flex; align-items: flex-end; gap: 8px; height: 140px; padding: 0 8px; }
+    .bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .bar-fill { width: 100%; background: var(--color-primary); border-radius: 4px 4px 0 0; min-height: 4px; transition: height 0.6s ease; opacity: 0.85; }
+    .bar-label { font-size: 0.7rem; color: var(--color-text-muted); }
+    .bar-val { font-size: 0.72rem; font-weight: 600; color: var(--color-text-secondary); }
+  </style>
+</head>
+<body>
+  <div id="nav-placeholder"></div>
+  <div id="sellerWrap" style="display:none">
+    <div class="seller-layout">
+      <aside class="seller-sidebar">
+        <div class="seller-logo"><img src="/images/logo.png" alt="Northstar"/><span class="seller-label">Seller Portal</span></div>
+        <nav class="seller-nav">
+          <span class="nav-section">Dashboard</span>
+          <a href="/seller/dashboard">Overview</a>
+          <span class="nav-section">Store</span>
+          <a href="/seller/products">My Products</a>
+          <a href="/seller/orders">Orders</a>
+          <a href="/seller/wallet">Wallet</a>
+          <a href="/seller/analytics" class="active">Analytics</a>
+          <span class="nav-section">Account</span>
+          <a href="/seller/settings">Settings</a>
+          <a href="/">← Back to Store</a>
+          <button onclick="logout()">Sign Out</button>
+        </nav>
+      </aside>
+      <main class="seller-main">
+        <div style="margin-bottom:28px"><h2 style="font-size:1.4rem;margin-bottom:4px">Analytics</h2><p class="text-secondary">Sales and performance insights</p></div>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px;margin-bottom:32px" id="analyticsStats"></div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
+          <div class="card">
+            <div class="card-header"><h3 style="font-size:1rem">Revenue by Month</h3></div>
+            <div class="card-body">
+              <div class="bar-chart" id="revenueChart"></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3 style="font-size:1rem">Orders by Status</h3></div>
+            <div class="card-body" id="statusBreakdown"></div>
+          </div>
+        </div>
+
+        <div class="card mt-24">
+          <div class="card-header"><h3 style="font-size:1rem">Top Products by Revenue</h3></div>
+          <div class="table-wrap" id="topProducts"><div class="loading-overlay"><div class="spinner"></div></div></div>
+        </div>
+      </main>
+    </div>
+  </div>
+  <div id="footer-placeholder"></div>
+  <script src="/js/app.js"></script>
+  <script>
+    async function load() {
+      if (!Auth.isLoggedIn()) { window.location.href = '/login?redirect=/seller/analytics'; return; }
+      document.getElementById('sellerWrap').style.display = 'block';
+      try {
+        const [orders, products] = await Promise.all([api('/orders'), api('/products?limit=100')]);
+        const allOrders = orders || [];
+        const allProducts = products.rows || [];
+
+        const totalRevenue = allOrders.reduce((s,o) => s + parseFloat(o.total || 0), 0);
+        const delivered = allOrders.filter(o => o.status === 'Delivered').length;
+        const avgOrder = allOrders.length ? (totalRevenue / allOrders.length).toFixed(2) : 0;
+
+        document.getElementById('analyticsStats').innerHTML = `
+          <div style="background:#fff;border:1px solid var(--color-border);border-radius:var(--radius-md);padding:20px"><div style="font-size:0.75rem;font-weight:700;color:var(--color-text-muted);text-transform:uppercase;margin-bottom:8px">Total Revenue</div><div style="font-size:1.75rem;font-weight:800">${formatCurrency(totalRevenue)}</div></div>
+          <div style="background:#fff;border:1px solid var(--color-border);border-radius:var(--radius-md);padding:20px"><div style="font-size:0.75rem;font-weight:700;color:var(--color-text-muted);text-transform:uppercase;margin-bottom:8px">Total Orders</div><div style="font-size:1.75rem;font-weight:800">${allOrders.length}</div></div>
+          <div style="background:#fff;border:1px solid var(--color-border);border-radius:var(--radius-md);padding:20px"><div style="font-size:0.75rem;font-weight:700;color:var(--color-text-muted);text-transform:uppercase;margin-bottom:8px">Avg. Order Value</div><div style="font-size:1.75rem;font-weight:800">${formatCurrency(avgOrder)}</div></div>
+          <div style="background:#fff;border:1px solid var(--color-border);border-radius:var(--radius-md);padding:20px"><div style="font-size:0.75rem;font-weight:700;color:var(--color-text-muted);text-transform:uppercase;margin-bottom:8px">Delivered</div><div style="font-size:1.75rem;font-weight:800 text-success">${delivered}</div></div>`;
+
+        // Build revenue by month chart from orders
+        const months = {};
+        allOrders.forEach(o => {
+          const m = new Date(o.createdAt).toLocaleString('en-US', { month: 'short' });
+          months[m] = (months[m] || 0) + parseFloat(o.total || 0);
+        });
+        const mKeys = Object.keys(months).slice(-6);
+        const maxVal = Math.max(...mKeys.map(k => months[k]), 1);
+        document.getElementById('revenueChart').innerHTML = mKeys.map(m => `
+          <div class="bar-col">
+            <div class="bar-val">${formatCurrency(months[m])}</div>
+            <div class="bar-fill" style="height:${Math.max(8, (months[m]/maxVal)*120)}px"></div>
+            <div class="bar-label">${m}</div>
+          </div>`).join('') || '<p class="text-muted" style="font-size:0.875rem;padding:16px">No data yet</p>';
+
+        // Status breakdown
+        const statuses = {};
+        allOrders.forEach(o => { statuses[o.status] = (statuses[o.status] || 0) + 1; });
+        document.getElementById('statusBreakdown').innerHTML = Object.entries(statuses).map(([s,c]) => `
+          <div class="rating-bar" style="margin-bottom:12px">
+            <span style="min-width:130px;font-size:0.875rem">${s}</span>
+            <div class="rating-bar-track"><div class="rating-bar-fill" style="background:var(--color-primary);width:${(c/allOrders.length*100).toFixed(0)}%"></div></div>
+            <span style="min-width:24px;font-size:0.8rem;font-weight:600">${c}</span>
+          </div>`).join('') || '<p class="text-muted" style="font-size:0.875rem">No orders yet</p>';
+
+        // Top products
+        const itemCounts = {};
+        allOrders.forEach(o => (o.items||[]).forEach(i => { itemCounts[i.productId] = (itemCounts[i.productId] || 0) + (i.unitPrice * i.quantity); }));
+        const sorted = allProducts.sort((a,b) => (itemCounts[b.id]||0) - (itemCounts[a.id]||0)).slice(0,8);
+        document.getElementById('topProducts').innerHTML = `<table>
+          <thead><tr><th>Product</th><th>Category</th><th>Price</th><th>Stock</th><th>Est. Revenue</th></tr></thead>
+          <tbody>${sorted.map(p => `<tr>
+            <td style="font-weight:600"><a href="/product/${p.id}">${p.name}</a></td>
+            <td><span class="badge badge-blue">${p.category}</span></td>
+            <td>${formatCurrency(p.price)}</td>
+            <td class="${p.stock > 0 ? 'text-success' : 'text-error'} font-bold">${p.stock}</td>
+            <td>${formatCurrency(itemCounts[p.id] || 0)}</td>
+          </tr>`).join('')}</tbody></table>`;
+      } catch(e) { console.error(e); }
+    }
+    document.addEventListener('DOMContentLoaded', load);
+  </script>
+</body>
+</html>
