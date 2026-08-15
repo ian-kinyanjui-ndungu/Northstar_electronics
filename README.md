@@ -6,9 +6,9 @@
 
 ## Live Demo
 
-**[https://northstarelectronics-production.up.railway.app/](https://northstarelectronics-production.up.railway.app/)**
+**<a href="https://northstarelectronics-production.up.railway.app/" target="_blank" rel="noopener noreferrer">https://northstarelectronics-production.up.railway.app/</a>**
 
-Hosted on [Railway](https://railway.app). No installation required — the demo environment is fully seeded with products, orders, and test accounts (see [Getting Started](#getting-started-local-setup) for credentials).
+Hosted on <a href="https://railway.app" target="_blank" rel="noopener noreferrer">Railway</a>. No installation required — the demo environment is fully seeded with products, orders, and test accounts (see [Getting Started](#getting-started-local-setup) for credentials).
 
 ---
 
@@ -155,8 +155,8 @@ northstar-electronics/
 
 ### Prerequisites
 
-- [Node.js](https://nodejs.org/) v18 or later
-- A TiDB instance ([TiDB Cloud free tier](https://tidbcloud.com/) works) **or** a local MySQL-compatible database (MySQL 8 / MariaDB)
+- <a href="https://nodejs.org/" target="_blank" rel="noopener noreferrer">Node.js</a> v18 or later
+- A TiDB instance (<a href="https://tidbcloud.com/" target="_blank" rel="noopener noreferrer">TiDB Cloud free tier</a> works) **or** a local MySQL-compatible database (MySQL 8 / MariaDB)
 
 ### 1. Clone the repository
 
