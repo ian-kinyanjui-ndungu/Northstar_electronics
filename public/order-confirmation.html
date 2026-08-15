@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Order Confirmed — Northstar Electronics</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"/>
+  <link rel="stylesheet" href="/css/style.css"/>
+  <style>
+    .confirmation-wrap { max-width: 600px; margin: 60px auto; padding: 0 24px; }
+    .check-circle { width: 72px; height: 72px; background: var(--color-success-bg); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px; color: var(--color-success); }
+    .order-items-list { margin: 20px 0; }
+    .order-item-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--color-border-light); font-size: 0.9rem; }
+    .order-item-row:last-child { border-bottom: none; }
+  </style>
+</head>
+<body>
+  <div id="nav-placeholder"></div>
+  <div class="page-wrapper">
+    <div class="confirmation-wrap">
+      <div class="card" id="confirmContent">
+        <div class="loading-overlay"><div class="spinner"></div></div>
+      </div>
+    </div>
+  </div>
+  <div id="footer-placeholder"></div>
+  <script src="/js/app.js"></script>
+  <script>
+    async function loadConfirmation() {
+      const params = new URLSearchParams(window.location.search);
+      const orderId = params.get('orderId');
+      const el = document.getElementById('confirmContent');
+
+      if (!orderId || !Auth.isLoggedIn()) {
+        el.innerHTML = '<div class="card-body"><p class="text-error">Invalid confirmation link.</p></div>';
+        return;
+      }
+
+      try {
+        const order = await api(`/orders/${orderId}`);
+        const shipping = order.total >= 99 ? 0 : 9.99;
+        el.innerHTML = `
+          <div class="card-body" style="text-align:center;padding:40px 32px">
+            <div class="check-circle">
+              <svg width="36" height="36" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <h1 style="font-size:1.75rem;margin-bottom:8px">Order Confirmed!</h1>
+            <p class="text-secondary">Thank you for your order. We'll send you updates as it ships.</p>
+          </div>
+          <hr class="divider" style="margin:0"/>
+          <div class="card-body">
+            <div class="flex-between mb-16">
+              <div><p class="text-muted" style="font-size:0.8rem;text-transform:uppercase;letter-spacing:0.5px;font-weight:600">Order Number</p><p style="font-weight:700">#${order.id}</p></div>
+              <div style="text-align:right"><p class="text-muted" style="font-size:0.8rem;text-transform:uppercase;letter-spacing:0.5px;font-weight:600">Status</p>${statusBadge(order.status)}</div>
+            </div>
+            <p class="text-muted" style="font-size:0.8rem;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Order Items</p>
+            <div class="order-items-list">
+              ${order.items.map(i => `
+              <div class="order-item-row">
+                <span>${i.product.name} <span class="text-muted">× ${i.quantity}</span></span>
+                <span style="font-weight:600">${formatCurrency(i.unitPrice * i.quantity)}</span>
+              </div>`).join('')}
+            </div>
+            <div style="margin-top:16px">
+              <div class="summary-row" style="display:flex;justify-content:space-between;font-size:0.9rem;padding:6px 0"><span>Subtotal</span><span>${formatCurrency(order.total)}</span></div>
+              <div class="summary-row" style="display:flex;justify-content:space-between;font-size:0.9rem;padding:6px 0"><span>Shipping</span><span>${shipping === 0 ? 'Free' : formatCurrency(shipping)}</span></div>
+              <div style="display:flex;justify-content:space-between;font-weight:700;font-size:1rem;padding:10px 0;border-top:2px solid var(--color-border);margin-top:4px"><span>Total</span><span>${formatCurrency(parseFloat(order.total) + shipping)}</span></div>
+            </div>
+            <div style="margin-top:16px;padding:12px 16px;background:var(--color-surface);border-radius:var(--radius-sm)">
+              <p style="font-size:0.8rem;font-weight:600;color:var(--color-text-secondary);margin-bottom:2px">SHIPPING TO</p>
+              <p style="font-size:0.9rem">${order.shippingAddress || '—'}</p>
+            </div>
+          </div>
+          <div class="card-footer" style="display:flex;gap:12px;justify-content:center">
+            <a href="/dashboard" class="btn btn-primary">Track Your Order</a>
+            <a href="/products" class="btn btn-outline">Continue Shopping</a>
+          </div>`;
+      } catch(e) {
+        el.innerHTML = '<div class="card-body"><p class="text-error">Could not load order details.</p></div>';
+      }
+    }
+
+    loadConfirmation();
+  </script>
+</body>
+</html>

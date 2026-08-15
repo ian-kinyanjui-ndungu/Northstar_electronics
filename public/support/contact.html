@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Contact Us – Northstar</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <div id="nav-placeholder"></div>
+
+  <div class="page-wrapper">
+    <div class="support-layout">
+
+      <!-- Sidebar -->
+      <aside class="support-sidebar">
+        <nav class="support-nav">
+          <a href="/help">Help Center</a>
+          <a href="/contact" class="active">Contact Us</a>
+          <a href="/faq">FAQ</a>
+          <a href="/shipping">Shipping Information</a>
+          <a href="/return-policy">Returns &amp; Refunds</a>
+          <a href="/payment-info">Payment Information</a>
+          <a href="/terms">Terms &amp; Conditions</a>
+          <a href="/privacy">Privacy Policy</a>
+          <a href="/about">About Us</a>
+        </nav>
+      </aside>
+
+      <!-- Main Content -->
+      <main class="support-content">
+
+        <h1>Get in Touch</h1>
+        <p style="color:#57606a;margin-bottom:2rem;">Have a question or need assistance? Fill out the form and we'll get back to you within 24 hours.</p>
+
+        <div style="display:grid;grid-template-columns:1fr 340px;gap:2rem;align-items:start;">
+
+          <!-- Contact Form -->
+          <div>
+            <div id="contact-success" style="display:none;background:#d1fae5;border:1px solid #6ee7b7;color:#065f46;padding:1rem 1.2rem;border-radius:8px;margin-bottom:1.2rem;font-size:.95rem;">
+              Thanks! We'll get back to you within 24 hours.
+            </div>
+            <form id="contact-form" style="display:flex;flex-direction:column;gap:1rem;" onsubmit="handleContactSubmit(event)">
+
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+                <div>
+                  <label style="display:block;font-size:.85rem;font-weight:500;margin-bottom:.4rem;color:#1f2328;">Full Name</label>
+                  <input type="text" placeholder="Jane Smith" required
+                    style="width:100%;padding:.7rem .9rem;border:1px solid #e5e7eb;border-radius:8px;font-size:.95rem;font-family:inherit;box-sizing:border-box;outline:none;" />
+                </div>
+                <div>
+                  <label style="display:block;font-size:.85rem;font-weight:500;margin-bottom:.4rem;color:#1f2328;">Email Address</label>
+                  <input type="email" placeholder="jane@example.com" required
+                    style="width:100%;padding:.7rem .9rem;border:1px solid #e5e7eb;border-radius:8px;font-size:.95rem;font-family:inherit;box-sizing:border-box;outline:none;" />
+                </div>
+              </div>
+
+              <div>
+                <label style="display:block;font-size:.85rem;font-weight:500;margin-bottom:.4rem;color:#1f2328;">Subject</label>
+                <select required
+                  style="width:100%;padding:.7rem .9rem;border:1px solid #e5e7eb;border-radius:8px;font-size:.95rem;font-family:inherit;background:#fff;outline:none;">
+                  <option value="" disabled selected>Select a subject…</option>
+                  <option>Order Issue</option>
+                  <option>Return Request</option>
+                  <option>Product Question</option>
+                  <option>Technical Support</option>
+                  <option>Other</option>
+                </select>
+              </div>
+
+              <div>
+                <label style="display:block;font-size:.85rem;font-weight:500;margin-bottom:.4rem;color:#1f2328;">Message</label>
+                <textarea rows="6" placeholder="Describe your issue or question in detail…" required
+                  style="width:100%;padding:.7rem .9rem;border:1px solid #e5e7eb;border-radius:8px;font-size:.95rem;font-family:inherit;resize:vertical;box-sizing:border-box;outline:none;"></textarea>
+              </div>
+
+              <div>
+                <button type="submit"
+                  style="padding:.8rem 2rem;background:#1f2328;color:#fff;border:none;border-radius:8px;font-size:.95rem;font-family:inherit;font-weight:500;cursor:pointer;">
+                  Send Message
+                </button>
+              </div>
+
+            </form>
+          </div>
+
+          <!-- Contact Info Cards -->
+          <div style="display:flex;flex-direction:column;gap:1rem;">
+
+            <div class="info-box">
+              <div style="font-size:1.3rem;margin-bottom:.5rem;">✉️</div>
+              <div style="font-weight:600;margin-bottom:.25rem;">Email</div>
+              <div style="font-size:.9rem;color:#57606a;">support@northstar.com</div>
+              <div style="font-size:.8rem;color:#57606a;margin-top:.2rem;">We reply within 24 hours</div>
+            </div>
+
+            <div class="info-box">
+              <div style="font-size:1.3rem;margin-bottom:.5rem;">📞</div>
+              <div style="font-weight:600;margin-bottom:.25rem;">Phone</div>
+              <div style="font-size:.9rem;color:#57606a;">1-800-NORTHSTAR</div>
+              <div style="font-size:.8rem;color:#57606a;margin-top:.2rem;">Mon–Fri, 9am–6pm PST<br/>Mon–Fri, 8pm–5am EAT (next day)</div>
+            </div>
+
+            <div class="info-box">
+              <div style="font-size:1.3rem;margin-bottom:.5rem;">💬</div>
+              <div style="font-weight:600;margin-bottom:.25rem;">Live Chat</div>
+              <div style="font-size:.9rem;color:#57606a;">Available on the website</div>
+              <div style="font-size:.8rem;color:#57606a;margin-top:.2rem;">Mon–Fri, 9am–8pm PST<br/>Mon–Fri, 8pm–7am EAT (next day)</div>
+            </div>
+
+            <div class="info-box">
+              <div style="font-size:1.3rem;margin-bottom:.5rem;">🕐</div>
+              <div style="font-weight:600;margin-bottom:.25rem;">Time Zones</div>
+              <div style="font-size:.85rem;color:#57606a;line-height:1.7;">
+                <strong>PST</strong> (UTC−8) — San Francisco<br/>
+                <strong>EAT</strong> (UTC+3) — Nairobi / Kampala<br/>
+                Difference: <strong>+11 hours</strong>
+              </div>
+            </div>
+
+            <div class="info-box">
+              <div style="font-size:1.3rem;margin-bottom:.5rem;">📬</div>
+              <div style="font-weight:600;margin-bottom:.25rem;">Mailing Address</div>
+              <div style="font-size:.9rem;color:#57606a;line-height:1.6;">
+                Northstar Technologies<br />
+                123 Innovation Drive<br />
+                San Francisco, CA 94105<br />
+                United States
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <div id="footer-placeholder"></div>
+  <script src="/js/app.js"></script>
+  <script>
+    function handleContactSubmit(e) {
+      e.preventDefault();
+      document.getElementById('contact-form').style.display = 'none';
+      document.getElementById('contact-success').style.display = 'block';
+    }
+  </script>
+</body>
+</html>

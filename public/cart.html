@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Shopping Cart — Northstar Electronics</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"/>
+  <link rel="stylesheet" href="/css/style.css"/>
+  <style>
+    .cart-layout { display: grid; grid-template-columns: 1fr 340px; gap: 32px; padding: 40px 0; }
+    .cart-item { display: grid; grid-template-columns: 90px 1fr auto; gap: 16px; align-items: center; padding: 20px 0; border-bottom: 1px solid var(--color-border-light); }
+    .cart-item:last-child { border-bottom: none; }
+    .cart-item-img { width: 90px; height: 70px; object-fit: contain; background: var(--color-surface); border-radius: var(--radius-md); padding: 8px; border: 1px solid var(--color-border); }
+    .cart-item-name { font-weight: 600; font-size: 0.95rem; margin-bottom: 4px; }
+    .cart-item-price { color: var(--color-text-secondary); font-size: 0.875rem; }
+    .qty-control-sm { display: flex; align-items: center; gap: 0; border: 1.5px solid var(--color-border); border-radius: var(--radius-sm); overflow: hidden; width: fit-content; margin-top: 10px; }
+    .qty-btn-sm { width: 32px; height: 32px; background: var(--color-surface); border: none; cursor: pointer; font-size: 1rem; transition: background var(--transition); }
+    .qty-btn-sm:hover { background: var(--color-surface-2); }
+    .qty-val-sm { width: 40px; height: 32px; text-align: center; border: none; border-left: 1.5px solid var(--color-border); border-right: 1.5px solid var(--color-border); font-size: 0.875rem; font-weight: 600; outline: none; }
+    .remove-btn { background: none; border: none; color: var(--color-text-muted); cursor: pointer; padding: 4px; transition: color var(--transition); }
+    .remove-btn:hover { color: var(--color-error); }
+    .order-summary-card { position: sticky; top: calc(var(--nav-height) + 20px); }
+    .summary-row { display: flex; justify-content: space-between; font-size: 0.9rem; padding: 8px 0; }
+    .summary-row.total { font-weight: 700; font-size: 1.05rem; padding-top: 12px; margin-top: 4px; border-top: 2px solid var(--color-border); }
+    @media (max-width: 768px) {
+      .cart-layout { grid-template-columns: 1fr; }
+      .order-summary-card { position: static; }
+    }
+    @media (max-width: 480px) {
+      .cart-item { grid-template-columns: 64px 1fr auto; gap: 12px; }
+      .cart-item-img { width: 64px; height: 50px; }
+    }
+  </style>
+</head>
+<body>
+  <div id="nav-placeholder"></div>
+  <div class="page-wrapper">
+    <div class="container">
+      <div style="padding-top:32px">
+        <div class="breadcrumb"><a href="/">Home</a> › <span>Cart</span></div>
+        <h1 style="margin-bottom:4px">Shopping Cart</h1>
+        <p class="text-secondary" id="cartSubtitle">Loading…</p>
+      </div>
+      <div class="cart-layout">
+        <div>
+          <div class="card">
+            <div class="card-body" id="cartItems">
+              <div class="loading-overlay"><div class="spinner"></div></div>
+            </div>
+          </div>
+          <div class="mt-16"><a href="/products" class="btn btn-ghost btn-sm">← Continue Shopping</a></div>
+        </div>
+        <aside>
+          <div class="card order-summary-card">
+            <div class="card-header"><h3 style="font-size:1rem">Order Summary</h3></div>
+            <div class="card-body" id="summaryBody">
+              <div class="summary-row"><span>Subtotal</span><span id="summarySubtotal">—</span></div>
+              <div class="summary-row"><span>Shipping</span><span id="summaryShipping">—</span></div>
+              <div class="summary-row total"><span>Total</span><span id="summaryTotal">—</span></div>
+              <button class="btn btn-primary btn-block mt-16" id="checkoutBtn" onclick="goToCheckout()">Proceed to Checkout</button>
+              <p style="font-size:0.75rem;color:var(--color-text-muted);text-align:center;margin-top:12px">
+                <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display:inline;vertical-align:middle"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                Secure checkout · SSL encrypted
+              </p>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </div>
+  <div id="footer-placeholder"></div>
+  <script src="/js/app.js"></script>
+  <script>
+    function renderCart() {
+      const items = Cart.get();
+      const subtitle = document.getElementById('cartSubtitle');
+      const cartItems = document.getElementById('cartItems');
+
+      subtitle.textContent = items.length === 0 ? 'Your cart is empty' : `${Cart.count()} item${Cart.count() !== 1 ? 's' : ''} in your cart`;
+
+      if (!items.length) {
+        cartItems.innerHTML = `
+          <div class="empty-state">
+            <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+            <h3>Your cart is empty</h3>
+            <p>Add some products to get started.</p>
+            <a href="/products" class="btn btn-primary">Browse Products</a>
+          </div>`;
+        updateSummary(0);
+        document.getElementById('checkoutBtn').disabled = true;
+        return;
+      }
+
+      cartItems.innerHTML = items.map(item => `
+        <div class="cart-item" id="item-${item.productId}">
+          <img class="cart-item-img" src="${item.image || productImageSVG()}" alt="${item.name}" onerror="this.src='${productImageSVG()}'"/>
+          <div>
+            <div class="cart-item-name"><a href="/product/${item.productId}" style="color:inherit;text-decoration:none">${item.name}</a></div>
+            <div class="cart-item-price">${formatCurrency(item.price)} each</div>
+            <div class="qty-control-sm">
+              <button class="qty-btn-sm" onclick="adjustQty(${item.productId}, -1)">−</button>
+              <input class="qty-val-sm" type="number" value="${item.quantity}" min="1" onchange="setQty(${item.productId}, this.value)"/>
+              <button class="qty-btn-sm" onclick="adjustQty(${item.productId}, 1)">+</button>
+            </div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-weight:700">${formatCurrency(item.price * item.quantity)}</div>
+            <button class="remove-btn mt-8" onclick="removeItem(${item.productId})" title="Remove">
+              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+            </button>
+          </div>
+        </div>`).join('');
+
+      updateSummary(Cart.subtotal());
+      document.getElementById('checkoutBtn').disabled = false;
+    }
+
+    function updateSummary(subtotal) {
+      const shipping = subtotal === 0 ? 0 : (subtotal >= 99 ? 0 : 9.99);
+      document.getElementById('summarySubtotal').textContent = formatCurrency(subtotal);
+      document.getElementById('summaryShipping').textContent = shipping === 0 ? (subtotal === 0 ? '—' : 'Free') : formatCurrency(shipping);
+      document.getElementById('summaryTotal').textContent = formatCurrency(subtotal + shipping);
+    }
+
+    function adjustQty(productId, delta) {
+      const items = Cart.get();
+      const item = items.find(i => i.productId === productId);
+      if (!item) return;
+      const newQty = item.quantity + delta;
+      if (newQty < 1) { Cart.remove(productId); } else { Cart.updateQty(productId, newQty); }
+      renderCart();
+    }
+
+    function setQty(productId, val) {
+      const qty = parseInt(val);
+      if (qty < 1) { Cart.remove(productId); } else { Cart.updateQty(productId, qty); }
+      renderCart();
+    }
+
+    function removeItem(productId) {
+      Cart.remove(productId);
+      renderCart();
+      Toast.show('Item removed from cart', 'info');
+    }
+
+    function goToCheckout() {
+      if (!Auth.isLoggedIn()) {
+        window.location.href = '/login?redirect=/checkout';
+        return;
+      }
+      window.location.href = '/checkout';
+    }
+
+    renderCart();
+  </script>
+</body>
+</html>

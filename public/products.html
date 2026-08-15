@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Products — Northstar Electronics</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"/>
+  <link rel="stylesheet" href="/css/style.css"/>
+  <style>
+    .products-layout { display: grid; grid-template-columns: 260px 1fr; gap: 32px; padding: 40px 0; }
+    .filters-panel { position: sticky; top: calc(var(--nav-height) + 16px); height: fit-content; }
+    .filter-section { margin-bottom: 28px; }
+    .filter-label { font-size: 0.8rem; font-weight: 700; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; display: block; }
+    .filter-option { display: flex; align-items: center; gap: 8px; padding: 7px 0; cursor: pointer; }
+    .filter-option input[type=checkbox] { width: 16px; height: 16px; accent-color: var(--color-primary); cursor: pointer; }
+    .filter-option label { font-size: 0.9rem; cursor: pointer; flex: 1; }
+    .price-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .price-input { padding: 8px 10px; border: 1.5px solid var(--color-border); border-radius: var(--radius-sm); font-size: 0.875rem; width: 100%; outline: none; }
+    .price-input:focus { border-color: var(--color-primary); }
+    .products-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
+    .result-count { font-size: 0.875rem; color: var(--color-text-secondary); }
+    .sort-select { padding: 8px 12px; border: 1.5px solid var(--color-border); border-radius: var(--radius-sm); font-size: 0.875rem; background: #fff; cursor: pointer; }
+    .active-filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+    .filter-tag { display: inline-flex; align-items: center; gap: 6px; background: var(--color-primary-light); color: var(--color-primary); padding: 4px 10px; border-radius: var(--radius-full); font-size: 0.8rem; font-weight: 600; }
+    .filter-tag button { background: none; border: none; cursor: pointer; color: inherit; font-size: 0.9rem; padding: 0; line-height: 1; }
+    .filter-divider { border: none; border-top: 1px solid var(--color-border); margin: 20px 0; }
+    @media (max-width: 768px) {
+      .products-layout { grid-template-columns: 1fr; }
+      .filters-panel { position: static; }
+      .filter-panel-inner { display: none; }
+      .filter-panel-inner.open { display: block; }
+      .filter-toggle-btn { display: flex; }
+    }
+    .filter-toggle-btn { display: none; align-items: center; gap: 8px; background: #fff; border: 1.5px solid var(--color-border); border-radius: var(--radius-sm); padding: 9px 16px; font-size: 0.875rem; font-weight: 600; cursor: pointer; margin-bottom: 16px; }
+  </style>
+</head>
+<body>
+  <div id="nav-placeholder"></div>
+  <div class="page-wrapper">
+    <div class="container">
+      <div class="products-layout">
+
+        <!-- Filters Sidebar -->
+        <aside class="filters-panel">
+          <button class="filter-toggle-btn" onclick="document.getElementById('filterPanelInner').classList.toggle('open')">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="14" y2="12"/><line x1="4" y1="18" x2="11" y2="18"/></svg>
+            Filters
+          </button>
+          <div id="filterPanelInner" class="filter-panel-inner" style="display:block">
+            <div class="card card-body" style="padding:24px">
+              <h3 style="margin-bottom:20px;font-size:1rem">Filters</h3>
+
+              <div class="filter-section">
+                <span class="filter-label">Category</span>
+                <div class="filter-option"><input type="checkbox" id="cat-laptops" value="Laptops" onchange="applyFilters()"/><label for="cat-laptops">Laptops</label></div>
+                <div class="filter-option"><input type="checkbox" id="cat-desktops" value="Desktops" onchange="applyFilters()"/><label for="cat-desktops">Desktops</label></div>
+                <div class="filter-option"><input type="checkbox" id="cat-monitors" value="Monitors" onchange="applyFilters()"/><label for="cat-monitors">Monitors</label></div>
+                <div class="filter-option"><input type="checkbox" id="cat-accessories" value="Accessories" onchange="applyFilters()"/><label for="cat-accessories">Accessories</label></div>
+              </div>
+
+              <hr class="filter-divider"/>
+
+              <div class="filter-section">
+                <span class="filter-label">Price Range</span>
+                <div class="price-inputs">
+                  <input type="number" class="price-input" id="minPrice" placeholder="Min $" min="0" onchange="applyFilters()"/>
+                  <input type="number" class="price-input" id="maxPrice" placeholder="Max $" min="0" onchange="applyFilters()"/>
+                </div>
+              </div>
+
+              <hr class="filter-divider"/>
+
+              <div class="filter-section">
+                <span class="filter-label">Availability</span>
+                <div class="filter-option"><input type="checkbox" id="in-stock-only" onchange="applyFilters()"/><label for="in-stock-only">In Stock Only</label></div>
+              </div>
+
+              <button class="btn btn-ghost btn-sm btn-block mt-8" onclick="clearFilters()">Clear All Filters</button>
+            </div>
+          </div>
+        </aside>
+
+        <!-- Products Main -->
+        <main>
+          <div class="products-header">
+            <div>
+              <h1 style="font-size:1.5rem;margin-bottom:4px" id="pageTitle">All Products</h1>
+              <p class="result-count" id="resultCount">Loading…</p>
+            </div>
+            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+              <input type="text" class="form-input" id="searchInput" placeholder="Search products…" style="width:220px;padding:8px 12px" oninput="debounceSearch()"/>
+              <select class="sort-select" id="sortSelect" onchange="applyFilters()">
+                <option value="featured">Featured</option>
+                <option value="price-asc">Price: Low to High</option>
+                <option value="price-desc">Price: High to Low</option>
+                <option value="name-asc">Name A–Z</option>
+              </select>
+            </div>
+          </div>
+          <div class="active-filters" id="activeFilters"></div>
+          <div class="product-grid" id="productsGrid">
+            <div class="loading-overlay" style="grid-column:1/-1"><div class="spinner"></div> Loading products…</div>
+          </div>
+        </main>
+      </div>
+    </div>
+  </div>
+  <div id="footer-placeholder"></div>
+  <script src="/js/app.js"></script>
+  <script>
+    let allProducts = [];
+    let searchTimer;
+
+    async function loadProducts() {
+      try {
+        const { rows } = await api('/products?limit=100');
+        allProducts = rows;
+        // Apply URL params on load
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('category')) {
+          const cbId = 'cat-' + params.get('category').toLowerCase();
+          const cb = document.getElementById(cbId);
+          if (cb) cb.checked = true;
+          document.getElementById('pageTitle').textContent = params.get('category');
+        }
+        if (params.get('featured') === 'true') {
+          document.getElementById('pageTitle').textContent = 'Best Sellers';
+        }
+        applyFilters();
+      } catch(e) {
+        document.getElementById('productsGrid').innerHTML = '<p class="text-error" style="grid-column:1/-1">Could not load products.</p>';
+      }
+    }
+
+    function applyFilters() {
+      const cats = Array.from(document.querySelectorAll('.filter-option input[type=checkbox][id^=cat-]:checked')).map(c => c.value);
+      const minP = parseFloat(document.getElementById('minPrice').value) || 0;
+      const maxP = parseFloat(document.getElementById('maxPrice').value) || Infinity;
+      const inStockOnly = document.getElementById('in-stock-only').checked;
+      const search = document.getElementById('searchInput').value.toLowerCase().trim();
+      const sort = document.getElementById('sortSelect').value;
+      const params = new URLSearchParams(window.location.search);
+      const featuredOnly = params.get('featured') === 'true';
+
+      let filtered = allProducts.filter(p => {
+        if (cats.length && !cats.includes(p.category)) return false;
+        if (parseFloat(p.price) < minP || parseFloat(p.price) > maxP) return false;
+        if (inStockOnly && p.stock <= 0) return false;
+        if (search && !p.name.toLowerCase().includes(search) && !p.description?.toLowerCase().includes(search)) return false;
+        if (featuredOnly && !p.featured) return false;
+        return true;
+      });
+
+      if (sort === 'price-asc') filtered.sort((a,b) => a.price - b.price);
+      else if (sort === 'price-desc') filtered.sort((a,b) => b.price - a.price);
+      else if (sort === 'name-asc') filtered.sort((a,b) => a.name.localeCompare(b.name));
+      else filtered.sort((a,b) => (b.featured - a.featured));
+
+      renderProducts(filtered);
+      updateActiveFilters(cats, minP, maxP, inStockOnly);
+    }
+
+    function renderProducts(products) {
+      const grid = document.getElementById('productsGrid');
+      document.getElementById('resultCount').textContent = `${products.length} product${products.length !== 1 ? 's' : ''}`;
+      if (!products.length) {
+        grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><h3>No products found</h3><p>Try adjusting your filters or search terms.</p><button class="btn btn-outline" onclick="clearFilters()">Clear Filters</button></div>`;
+        return;
+      }
+      grid.innerHTML = products.map(p => {
+        const img = p.image || productImageSVG(p.category);
+        const inStock = p.stock > 0;
+        return `
+        <div class="card product-card" onclick="window.location='/product/${p.id}'">
+          <img class="product-img" src="${img}" alt="${p.name}" onerror="this.src='${productImageSVG(p.category)}'"/>
+          <div class="product-info">
+            <p class="product-category">${p.category}</p>
+            <h4 class="product-name">${p.name}</h4>
+            <p class="product-price">${formatCurrency(p.price)}</p>
+            <div class="flex-between" style="gap:8px;flex-wrap:wrap">
+              <span class="stock-badge ${inStock ? 'in-stock' : 'out-of-stock'}">${inStock ? '● In Stock' : '● Out of Stock'}</span>
+              <button class="btn btn-primary btn-sm" ${inStock ? '' : 'disabled'}
+                onclick="event.stopPropagation();doAdd(event, ${p.id}, '${p.name.replace(/'/g,"\\'")}', ${p.price}, '${p.category}', '${img}')">
+                Add to Cart
+              </button>
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    function doAdd(e, id, name, price, category, image) {
+      e.stopPropagation();
+      Cart.add({ id, name, price, category, image });
+      Toast.show(`${name} added to cart`, 'success');
+    }
+
+    function updateActiveFilters(cats, minP, maxP, inStockOnly) {
+      const container = document.getElementById('activeFilters');
+      let tags = '';
+      cats.forEach(c => { tags += `<span class="filter-tag">${c} <button onclick="removeCatFilter('${c}')">×</button></span>`; });
+      if (minP > 0) tags += `<span class="filter-tag">Min: ${formatCurrency(minP)} <button onclick="document.getElementById('minPrice').value='';applyFilters()">×</button></span>`;
+      if (maxP < Infinity) tags += `<span class="filter-tag">Max: ${formatCurrency(maxP)} <button onclick="document.getElementById('maxPrice').value='';applyFilters()">×</button></span>`;
+      if (inStockOnly) tags += `<span class="filter-tag">In Stock <button onclick="document.getElementById('in-stock-only').checked=false;applyFilters()">×</button></span>`;
+      container.innerHTML = tags;
+    }
+
+    function removeCatFilter(cat) {
+      const cb = document.getElementById('cat-' + cat.toLowerCase());
+      if (cb) cb.checked = false;
+      applyFilters();
+    }
+
+    function clearFilters() {
+      document.querySelectorAll('.filter-option input[type=checkbox]').forEach(c => c.checked = false);
+      document.getElementById('minPrice').value = '';
+      document.getElementById('maxPrice').value = '';
+      document.getElementById('searchInput').value = '';
+      applyFilters();
+    }
+
+    function debounceSearch() {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(applyFilters, 300);
+    }
+
+    loadProducts();
+  </script>
+</body>
+</html>

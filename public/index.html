@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Northstar Electronics — Premium Tech Products</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"/>
+  <link rel="stylesheet" href="/css/style.css"/>
+  <style>
+    /* Hero */
+    .hero {
+      background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 60%, #1d4ed8 100%);
+      padding: 96px 0 80px;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 70% 50%, rgba(37,99,235,0.3) 0%, transparent 60%);
+    }
+    .hero-inner { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: center; position: relative; }
+    .hero-eyebrow { display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.85); font-size: 0.8rem; font-weight: 600; padding: 5px 12px; border-radius: var(--radius-full); margin-bottom: 20px; letter-spacing: 0.5px; text-transform: uppercase; border: 1px solid rgba(255,255,255,0.15); }
+    .hero h1 { color: #fff; margin-bottom: 20px; font-size: clamp(2rem, 4.5vw, 3.25rem); letter-spacing: -1px; }
+    .hero h1 em { color: #93c5fd; font-style: normal; }
+    .hero p { color: rgba(255,255,255,0.75); font-size: 1.1rem; margin-bottom: 36px; max-width: 480px; }
+    .hero-actions { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+    .btn-hero { padding: 14px 28px; font-size: 1rem; background: #fff; color: var(--color-primary); border-color: #fff; }
+    .btn-hero:hover { background: #f0f7ff; color: var(--color-primary-hover); }
+    .btn-hero-outline { padding: 14px 28px; font-size: 1rem; border-color: rgba(255,255,255,0.4); color: #fff; background: transparent; }
+    .btn-hero-outline:hover { border-color: #fff; background: rgba(255,255,255,0.1); }
+    .hero-visual { position: relative; }
+    .hero-card {
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: var(--radius-xl);
+      padding: 32px;
+      backdrop-filter: blur(12px);
+    }
+    .hero-card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .hero-mini-card {
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      text-align: center;
+    }
+    .hero-mini-card .icon { font-size: 1.5rem; margin-bottom: 6px; }
+    .hero-mini-card p { color: rgba(255,255,255,0.85); font-size: 0.8rem; font-weight: 600; margin: 0; }
+    .hero-stats { display: flex; gap: 24px; margin-top: 24px; }
+    .hero-stat { text-align: center; flex: 1; }
+    .hero-stat strong { display: block; font-size: 1.5rem; color: #fff; font-weight: 800; }
+    .hero-stat span { font-size: 0.78rem; color: rgba(255,255,255,0.6); }
+
+    /* Category strip */
+    .category-strip { background: var(--color-surface); border-bottom: 1px solid var(--color-border); }
+    .category-strip-inner { display: flex; gap: 8px; padding: 20px 0; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .category-chip {
+      display: flex; align-items: center; gap: 8px;
+      padding: 10px 20px;
+      background: #fff;
+      border: 1.5px solid var(--color-border);
+      border-radius: var(--radius-full);
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--color-text);
+      white-space: nowrap;
+      cursor: pointer;
+      transition: all var(--transition);
+      text-decoration: none;
+    }
+    .category-chip:hover { border-color: var(--color-primary); color: var(--color-primary); background: var(--color-primary-light); text-decoration: none; }
+    .category-chip .dot { width: 8px; height: 8px; border-radius: 50%; }
+
+    /* Features bar */
+    .features-bar { background: #fff; border-bottom: 1px solid var(--color-border); }
+    .features-bar-inner { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; }
+    .feature-item { display: flex; align-items: center; gap: 12px; padding: 20px 24px; border-right: 1px solid var(--color-border); }
+    .feature-item:last-child { border-right: none; }
+    .feature-icon { color: var(--color-primary); flex-shrink: 0; }
+    .feature-item h5 { font-size: 0.875rem; margin-bottom: 2px; }
+    .feature-item p { font-size: 0.78rem; color: var(--color-text-secondary); margin: 0; }
+
+    @media (max-width: 900px) {
+      .hero-inner { grid-template-columns: 1fr; }
+      .hero-visual { display: none; }
+      .features-bar-inner { grid-template-columns: repeat(2, 1fr); }
+      .feature-item:nth-child(2) { border-right: none; }
+    }
+    @media (max-width: 480px) {
+      .features-bar-inner { grid-template-columns: 1fr; }
+      .feature-item { border-right: none; border-bottom: 1px solid var(--color-border); }
+    }
+  </style>
+</head>
+<body>
+  <div id="nav-placeholder"></div>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="container">
+      <div class="hero-inner">
+        <div class="hero-content">
+          <div class="hero-eyebrow">⚡ New arrivals just landed</div>
+          <h1>The tech you need, <em>built to last</em></h1>
+          <p>Premium laptops, desktops, monitors, and accessories. Curated for professionals, priced for everyone.</p>
+          <div class="hero-actions">
+            <a href="/products" class="btn btn-hero">Shop Now</a>
+            <a href="/products?featured=true" class="btn btn-hero-outline">View Best Sellers</a>
+          </div>
+        </div>
+        <div class="hero-visual">
+          <div class="hero-card">
+            <div class="hero-card-grid">
+              <div class="hero-mini-card"><div class="icon">💻</div><p>Laptops</p></div>
+              <div class="hero-mini-card"><div class="icon">🖥️</div><p>Desktops</p></div>
+              <div class="hero-mini-card"><div class="icon">🖵</div><p>Monitors</p></div>
+              <div class="hero-mini-card"><div class="icon">🎧</div><p>Accessories</p></div>
+            </div>
+            <div class="hero-stats">
+              <div class="hero-stat"><strong>500+</strong><span>Products</span></div>
+              <div class="hero-stat"><strong>24/7</strong><span>Support</span></div>
+              <div class="hero-stat"><strong>14-day</strong><span>Returns</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Categories -->
+  <section class="category-strip">
+    <div class="container">
+      <div class="category-strip-inner">
+        <a href="/products" class="category-chip"><span class="dot" style="background:#6b7280"></span>All Products</a>
+        <a href="/products?category=Laptops" class="category-chip"><span class="dot" style="background:#3b82f6"></span>Laptops</a>
+        <a href="/products?category=Desktops" class="category-chip"><span class="dot" style="background:#8b5cf6"></span>Desktops</a>
+        <a href="/products?category=Monitors" class="category-chip"><span class="dot" style="background:#06b6d4"></span>Monitors</a>
+        <a href="/products?category=Accessories" class="category-chip"><span class="dot" style="background:#10b981"></span>Accessories</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features bar -->
+  <section class="features-bar">
+    <div class="container">
+      <div class="features-bar-inner">
+        <div class="feature-item">
+          <div class="feature-icon"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+          <div><h5>Free Shipping</h5><p>On orders over $99</p></div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 14l6-6m-5-1l-3 3 3 3M15 11l3-3-3-3"/></svg></div>
+          <div><h5>14-Day Returns</h5><p>Hassle-free policy</p></div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+          <div><h5>Secure Checkout</h5><p>256-bit SSL encryption</p></div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.15 12.18 19.79 19.79 0 0 1 1.08 3.58 2 2 0 0 1 3.05 1.4h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.09 9a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 21 16z"/></svg></div>
+          <div><h5>Expert Support</h5><p>Mon–Fri, 9am–6pm PST</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Featured Products -->
+  <section class="section">
+    <div class="container">
+      <div class="flex-between mb-32">
+        <div>
+          <h2 class="section-title">Best Sellers</h2>
+          <p class="text-secondary">Our most popular products, hand-picked for quality.</p>
+        </div>
+        <a href="/products?featured=true" class="btn btn-outline">View All</a>
+      </div>
+      <div class="product-grid" id="featuredGrid">
+        <div class="loading-overlay" style="grid-column:1/-1"><div class="spinner"></div> Loading products…</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Category feature cards -->
+  <section class="section" style="background:var(--color-surface); padding-top:0">
+    <div class="container">
+      <h2 class="section-title mb-8">Shop by Category</h2>
+      <p class="section-subtitle">Everything you need to build your perfect setup.</p>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:20px" id="categoryGrid">
+        <!-- injected by JS -->
+      </div>
+    </div>
+  </section>
+
+  <div id="footer-placeholder"></div>
+  <script src="/js/app.js"></script>
+  <script>
+    const categories = [
+      { name: 'Laptops', color: '#3b82f6', desc: 'Ultrabooks, gaming rigs, and workstations', icon: '💻' },
+      { name: 'Desktops', color: '#8b5cf6', desc: 'Mini PCs, towers, and powerhouse builds', icon: '🖥️' },
+      { name: 'Monitors', color: '#06b6d4', desc: '4K, ultrawide, OLED, and gaming displays', icon: '🖵' },
+      { name: 'Accessories', color: '#10b981', desc: 'Keyboards, mice, hubs, and more', icon: '🎧' },
+    ];
+
+    document.getElementById('categoryGrid').innerHTML = categories.map(c => `
+      <a href="/products?category=${c.name}" class="card" style="text-decoration:none;cursor:pointer">
+        <div style="background:${c.color}18;padding:28px;text-align:center">
+          <div style="font-size:2.5rem;margin-bottom:8px">${c.icon}</div>
+          <h3 style="color:${c.color}">${c.name}</h3>
+        </div>
+        <div class="card-body">
+          <p class="text-secondary" style="font-size:0.875rem;margin:0">${c.desc}</p>
+        </div>
+      </a>
+    `).join('');
+
+    async function loadFeatured() {
+      try {
+        const { rows } = await api('/products?featured=true&limit=8');
+        const grid = document.getElementById('featuredGrid');
+        if (!rows.length) { grid.innerHTML = '<p class="text-muted">No featured products yet.</p>'; return; }
+        grid.innerHTML = rows.map(p => renderProductCard(p)).join('');
+      } catch (e) {
+        document.getElementById('featuredGrid').innerHTML = '<p class="text-error">Could not load products.</p>';
+      }
+    }
+
+    function renderProductCard(p) {
+      const img = p.image || productImageSVG(p.category);
+      const inStock = p.stock > 0;
+      return `
+        <div class="card product-card" onclick="window.location='/product/${p.id}'">
+          <img class="product-img" src="${img}" alt="${p.name}" onerror="this.src='${productImageSVG(p.category)}'"/>
+          <div class="product-info">
+            <p class="product-category">${p.category}</p>
+            <h4 class="product-name">${p.name}</h4>
+            <p class="product-price">${formatCurrency(p.price)}</p>
+            <div class="flex-between" style="gap:8px">
+              <span class="stock-badge ${inStock ? 'in-stock' : 'out-of-stock'}">${inStock ? '● In Stock' : '● Out of Stock'}</span>
+              <button class="btn btn-primary btn-sm" ${inStock ? '' : 'disabled'}
+                onclick="event.stopPropagation(); addToCartFromCard(${JSON.stringify(p).replace(/"/g, '&quot;')})">
+                Add to Cart
+              </button>
+            </div>
+          </div>
+        </div>`;
+    }
+
+    function addToCartFromCard(p) {
+      if (p.stock <= 0) return;
+      Cart.add(p);
+      Toast.show(`${p.name} added to cart`, 'success');
+    }
+
+    loadFeatured();
+  </script>
+</body>
+</html>

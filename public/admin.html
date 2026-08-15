@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Panel — Northstar Electronics</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"/>
+  <link rel="stylesheet" href="/css/style.css"/>
+  <style>
+    .admin-layout { display: grid; grid-template-columns: 220px 1fr; gap: 0; align-items: start; min-height: calc(100vh - var(--nav-height) - 54px); }
+    .admin-sidebar {
+      background: #0f172a; color: rgba(255,255,255,0.85); padding: 24px 12px;
+      position: sticky;
+      top: calc(var(--nav-height) + 54px);
+      height: calc(100vh - var(--nav-height) - 54px);
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+    .admin-logo { display: flex; align-items: center; gap: 10px; color: #fff; padding: 8px 12px 24px; border-bottom: 1px solid rgba(255,255,255,0.08); margin-bottom: 16px; }
+    .admin-logo img { height: 32px; width: auto; filter: brightness(0) invert(1); }
+    .admin-logo-label { font-size: 0.7rem; font-weight: 700; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 0.8px; display: block; margin-top: 2px; }
+    .admin-nav a, .admin-nav button {
+      display: flex; align-items: center; gap: 10px; width: 100%;
+      padding: 10px 12px; border-radius: var(--radius-sm);
+      font-size: 0.875rem; font-weight: 500; color: rgba(255,255,255,0.65);
+      text-decoration: none; border: none; background: none; cursor: pointer; text-align: left;
+      transition: all var(--transition);
+    }
+    .admin-nav a:hover, .admin-nav button:hover { background: rgba(255,255,255,0.07); color: #fff; text-decoration: none; }
+    .admin-nav a.active { background: rgba(96,165,250,0.15); color: #93c5fd; }
+    .admin-nav .nav-section { font-size: 0.7rem; font-weight: 700; color: rgba(255,255,255,0.3); text-transform: uppercase; letter-spacing: 0.8px; padding: 16px 12px 4px; }
+    .admin-main { background: var(--color-surface); padding: 36px; overflow: auto; }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+    .page-header { margin-bottom: 28px; }
+    .page-header h2 { font-size: 1.4rem; }
+
+    /* Stats cards */
+    .stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px; }
+    .stat-card { background: #fff; border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 20px; }
+    .stat-card .stat-label { font-size: 0.78rem; font-weight: 600; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+    .stat-card .stat-value { font-size: 1.75rem; font-weight: 800; color: var(--color-text); }
+    .stat-card .stat-sub { font-size: 0.8rem; color: var(--color-text-secondary); margin-top: 4px; }
+
+    /* Product form */
+    .product-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+    @media (max-width: 900px) {
+      .admin-layout { grid-template-columns: 1fr; }
+      .admin-sidebar { position: static; height: auto; overflow: visible; padding: 16px; }
+      .admin-nav { display: flex; overflow-x: auto; gap: 4px; }
+      .admin-nav .nav-section { display: none; }
+      .admin-main { padding: 24px 16px; }
+      .product-form-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div id="nav-placeholder"></div>
+
+  <!-- Admin sidebar drawer overlay (mobile) -->
+  <div class="admin-drawer-overlay" id="adminDrawerOverlay" onclick="closeAdminDrawer()"></div>
+
+  <!-- Search topbar -->
+  <div class="dash-topbar" style="position:sticky;top:var(--nav-height);z-index:40;border-bottom:1px solid var(--color-border);background:#fff">
+    <!-- Hamburger — only visible on mobile -->
+    <button class="admin-hamburger" id="adminHamburger" onclick="toggleAdminDrawer()" aria-label="Open menu">
+      <svg id="adminHamburgerIcon" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <line x1="3" y1="6" x2="21" y2="6"/>
+        <line x1="3" y1="12" x2="21" y2="12"/>
+        <line x1="3" y1="18" x2="21" y2="18"/>
+      </svg>
+    </button>
+    <span class="dash-topbar-title">Admin Panel</span>
+    <div class="dash-search-wrap">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input class="dash-search-input" id="adminSearchInput" placeholder="Search products, orders, users, returns…" autocomplete="off"
+        oninput="onAdminSearch()" onfocus="openAdminSearch()" />
+      <div class="dash-search-results" id="adminSearchResults"></div>
+    </div>
+    <div style="font-size:0.85rem;font-weight:600;color:var(--color-text-secondary);display:flex;align-items:center;gap:6px">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <span id="adminTopbarName">Admin</span>
+    </div>
+  </div>
+
+  <div id="adminWrap" style="display:none">
+    <div class="admin-layout">
+
+      <!-- Admin Sidebar -->
+      <aside class="admin-sidebar">
+        <div class="admin-logo">
+          <img src="/images/logo.png" alt="Northstar"/>
+          <div><span style="font-size:0.95rem;font-weight:700;color:#fff">Northstar</span><span class="admin-logo-label">Admin Panel</span></div>
+        </div>
+        <nav class="admin-nav" id="adminNav">
+          <span class="nav-section">Management</span>
+          <a href="#" class="active" onclick="showAdminTab('overview', this)">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            Overview
+          </a>
+          <a href="#" onclick="showAdminTab('products', this)">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+            Products
+          </a>
+          <a href="#" onclick="showAdminTab('sellers', this)" id="nav-sellers">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            Sellers <span id="pendingSellersCount" class="cart-badge" style="display:none;margin-left:4px"></span>
+          </a>
+          <a href="#" onclick="showAdminTab('orders', this)">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/></svg>
+            Orders
+          </a>
+          <a href="#" onclick="showAdminTab('returns', this)">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>
+            Returns
+          </a>
+          <a href="#" onclick="showAdminTab('users', this)">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+            Users
+          </a>
+          <span class="nav-section">Site</span>
+          <a href="/">← Back to Store</a>
+          <button onclick="logout()">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            Sign Out
+          </button>
+        </nav>
+      </aside>
+
+      <!-- Admin Main -->
+      <main class="admin-main">
+
+        <!-- Overview Tab -->
+        <div class="tab-panel active" id="apanel-overview">
+          <div class="page-header"><h2>Overview</h2><p class="text-secondary">Welcome back, admin.</p></div>
+          <div class="stat-grid" id="statGrid"><div class="loading-overlay"><div class="spinner"></div></div></div>
+        </div>
+
+        <!-- Products Tab -->
+        <div class="tab-panel" id="apanel-products">
+          <div class="page-header flex-between">
+            <div><h2>Products</h2><p class="text-secondary">Manage your product catalog.</p></div>
+            <button class="btn btn-primary btn-sm" onclick="openProductModal(null)">+ Add Product</button>
+          </div>
+          <div class="card">
+            <div class="table-wrap" id="productsTable"><div class="loading-overlay"><div class="spinner"></div></div></div>
+          </div>
+        </div>
+
+        <!-- Orders Tab -->
+        <div class="tab-panel" id="apanel-orders">
+          <div class="page-header"><h2>All Orders</h2><p class="text-secondary">View and update order statuses.</p></div>
+          <div class="card">
+            <div class="table-wrap" id="ordersTable"><div class="loading-overlay"><div class="spinner"></div></div></div>
+          </div>
+        </div>
+
+        <!-- Sellers Tab -->
+        <div class="tab-panel" id="apanel-sellers">
+          <div class="page-header">
+            <h2>Seller Management</h2>
+            <p class="text-secondary">Approve, suspend, or manage seller accounts. Active sellers can add products that you then approve.</p>
+          </div>
+
+          <!-- Pending Product Approvals -->
+          <div class="card mb-24">
+            <div class="card-header flex-between">
+              <h3 style="font-size:1rem">
+                ⏳ Pending Product Approvals
+                <span id="pendingProductCount" class="badge badge-amber" style="margin-left:8px"></span>
+              </h3>
+              <button class="btn btn-ghost btn-sm" onclick="loadAdminSellers()">Refresh</button>
+            </div>
+            <div id="pendingProductsContainer">
+              <div class="loading-overlay"><div class="spinner"></div></div>
+            </div>
+          </div>
+
+          <!-- All Sellers -->
+          <div class="card">
+            <div class="card-header"><h3 style="font-size:1rem">All Seller Accounts</h3></div>
+            <div class="table-wrap" id="sellersTable">
+              <div class="loading-overlay"><div class="spinner"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Users Tab -->
+        <div class="tab-panel" id="apanel-users">
+          <div class="page-header flex-between">
+            <div>
+              <h2>User Management</h2>
+              <p class="text-secondary">View, change roles, and remove customer accounts. Admin accounts are protected.</p>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <input type="text" id="userSearchInput" class="form-input" placeholder="Search name or email…" style="width:220px;font-size:0.85rem" oninput="filterUsersTable()"/>
+            </div>
+          </div>
+          <div class="card">
+            <div class="table-wrap" id="usersTable"><div class="loading-overlay"><div class="spinner"></div></div></div>
+          </div>
+        </div>
+
+        <!-- Returns Tab -->
+        <div class="tab-panel" id="apanel-returns">
+          <div class="page-header"><h2>Return Requests</h2><p class="text-secondary">Review and manage customer returns.</p></div>
+          <div class="card">
+            <div class="table-wrap" id="returnsTable"><div class="loading-overlay"><div class="spinner"></div></div></div>
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- Product Modal -->
+  <div class="modal-overlay" id="productModal">
+    <div class="modal" style="max-width:580px">
+      <div class="modal-header">
+        <h3 id="productModalTitle">Add Product</h3>
+        <button class="modal-close" onclick="closeProductModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <div id="productModalError" class="alert alert-error hidden mb-16"></div>
+        <input type="hidden" id="editProductId"/>
+        <div class="product-form-grid">
+          <div class="form-group" style="grid-column:1/-1"><label class="form-label">Product Name *</label><input type="text" id="pName" class="form-input" placeholder="e.g. ProBook X15 Laptop"/></div>
+          <div class="form-group">
+            <label class="form-label">Category *</label>
+            <select id="pCategory" class="form-select">
+              <option value="">Select…</option>
+              <option>Laptops</option><option>Desktops</option><option>Monitors</option><option>Accessories</option>
+            </select>
+          </div>
+          <div class="form-group"><label class="form-label">Price ($) *</label><input type="number" id="pPrice" class="form-input" placeholder="999.99" step="0.01" min="0"/></div>
+          <div class="form-group"><label class="form-label">Stock Quantity *</label><input type="number" id="pStock" class="form-input" placeholder="0" min="0"/></div>
+          <div class="form-group"><label class="form-label">Image URL</label><input type="text" id="pImage" class="form-input" placeholder="/images/products/…"/></div>
+          <div class="form-group" style="grid-column:1/-1"><label class="form-label">Description</label><textarea id="pDescription" class="form-textarea" rows="3" placeholder="Product description…"></textarea></div>
+          <div class="form-group" style="grid-column:1/-1">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="pFeatured" style="width:16px;height:16px;accent-color:var(--color-primary)"/> <span class="form-label" style="margin:0">Featured / Best Seller</span></label>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeProductModal()">Cancel</button>
+        <button class="btn btn-primary" id="saveProductBtn" onclick="saveProduct()">Save Product</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="footer-placeholder"></div>
+
+  <script src="/js/app.js"></script>
+  <script>
+    let adminProducts = [], adminOrders = [], adminReturns = [], adminUsers = [];
+
+    function showAdminTab(tab, el) {
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.admin-nav a').forEach(a => a.classList.remove('active'));
+      const panel = document.getElementById('apanel-' + tab);
+      panel.classList.add('active');
+      // Micro-splash: branded bar across top of main content
+      showTabTransition(panel);
+      if (el) el.classList.add('active');
+      if (tab === 'products') loadAdminProducts();
+      else if (tab === 'orders') loadAdminOrders();
+      else if (tab === 'returns') loadAdminReturns();
+      else if (tab === 'sellers') loadAdminSellers();
+      else if (tab === 'users') loadAdminUsers();
+    }
+
+    function showTabTransition(container) {
+      const bar = document.createElement('div');
+      bar.style.cssText = 'position:fixed;top:0;left:0;width:0;height:3px;background:linear-gradient(90deg,#3b82d4,#7c5cd8);z-index:9999;transition:width 0.4s cubic-bezier(.4,0,.2,1),opacity 0.3s ease;border-radius:0 2px 2px 0;';
+      document.body.appendChild(bar);
+      requestAnimationFrame(() => { requestAnimationFrame(() => { bar.style.width = '100%'; }); });
+      setTimeout(() => { bar.style.opacity = '0'; setTimeout(() => bar.remove(), 300); }, 450);
+    }
+
+    // ---- Overview ----
+    async function loadOverview() {
+      try {
+        const [products, orders, returns, sellers, pendingProducts] = await Promise.all([
+          api('/admin/products'),
+          api('/admin/orders'),
+          api('/admin/returns'),
+          api('/sellers/admin/all').catch(() => []),
+          api('/sellers/admin/pending-products').catch(() => []),
+        ]);
+        adminProducts = products; adminOrders = orders; adminReturns = returns;
+        const processing = orders.filter(o => o.status === 'Processing').length;
+        const pendingReturns = returns.filter(r => r.status === 'Requested').length;
+        const pendingSellers = sellers.filter(s => s.status === 'Pending').length;
+        const revenue = orders.reduce((s, o) => s + parseFloat(o.total), 0);
+
+        // Update sidebar badge
+        if (pendingSellers + pendingProducts.length > 0) {
+          const badge = document.getElementById('pendingSellersCount');
+          badge.textContent = pendingSellers + pendingProducts.length;
+          badge.style.display = 'inline-flex';
+        }
+
+        document.getElementById('statGrid').innerHTML = `
+          <div class="stat-card"><div class="stat-label">Total Products</div><div class="stat-value">${products.length}</div><div class="stat-sub">In catalog</div></div>
+          <div class="stat-card"><div class="stat-label">Total Orders</div><div class="stat-value">${orders.length}</div><div class="stat-sub">${processing} pending</div></div>
+          <div class="stat-card"><div class="stat-label">Total Revenue</div><div class="stat-value">${formatCurrency(revenue)}</div><div class="stat-sub">All time</div></div>
+          <div class="stat-card"><div class="stat-label">Return Requests</div><div class="stat-value">${returns.length}</div><div class="stat-sub">${pendingReturns} pending review</div></div>
+          <div class="stat-card"><div class="stat-label">Sellers</div><div class="stat-value">${sellers.length}</div><div class="stat-sub">${pendingSellers} awaiting approval</div></div>
+          <div class="stat-card"><div class="stat-label">Pending Products</div><div class="stat-value">${pendingProducts.length}</div><div class="stat-sub">Awaiting admin review</div></div>`;
+      } catch(e) {
+        document.getElementById('statGrid').innerHTML = '<p class="text-error">Could not load overview.</p>';
+      }
+    }
+
+    // ---- Products ----
+    async function loadAdminProducts() {
+      try {
+        adminProducts = await api('/admin/products');
+        renderProductsTable();
+      } catch(e) {
+        document.getElementById('productsTable').innerHTML = '<p class="text-error p-4">Could not load products.</p>';
+      }
+    }
+
+    function renderProductsTable() {
+      document.getElementById('productsTable').innerHTML = `<table>
+        <thead><tr><th>Name</th><th>Category</th><th>Price</th><th>Stock</th><th>Featured</th><th>Actions</th></tr></thead>
+        <tbody>${adminProducts.map(p => `<tr>
+          <td style="font-weight:600;max-width:200px">${p.name}</td>
+          <td><span class="badge badge-blue">${p.category}</span></td>
+          <td>${formatCurrency(p.price)}</td>
+          <td><span class="${p.stock > 0 ? 'text-success' : 'text-error'} font-bold">${p.stock}</span></td>
+          <td>${p.featured ? '<span class="badge badge-amber">Featured</span>' : '<span class="text-muted">—</span>'}</td>
+          <td style="white-space:nowrap">
+            <button class="btn btn-ghost btn-sm" onclick='openProductModal(${JSON.stringify(p).replace(/'/g,"&#39;")})'>Edit</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteProduct(${p.id}, '${p.name.replace(/'/g, "\\'")}')">Delete</button>
+          </td>
+        </tr>`).join('')}</tbody>
+      </table>`;
+    }
+
+    function openProductModal(product) {
+      document.getElementById('productModalTitle').textContent = product ? 'Edit Product' : 'Add Product';
+      document.getElementById('editProductId').value = product?.id || '';
+      document.getElementById('pName').value = product?.name || '';
+      document.getElementById('pCategory').value = product?.category || '';
+      document.getElementById('pPrice').value = product?.price || '';
+      document.getElementById('pStock').value = product?.stock ?? '';
+      document.getElementById('pImage').value = product?.image || '';
+      document.getElementById('pDescription').value = product?.description || '';
+      document.getElementById('pFeatured').checked = product?.featured || false;
+      document.getElementById('productModalError').classList.add('hidden');
+      document.getElementById('productModal').classList.add('open');
+    }
+
+    function closeProductModal() {
+      document.getElementById('productModal').classList.remove('open');
+    }
+
+    async function saveProduct() {
+      const btn = document.getElementById('saveProductBtn');
+      const errEl = document.getElementById('productModalError');
+      errEl.classList.add('hidden');
+      const id = document.getElementById('editProductId').value;
+      const data = {
+        name: document.getElementById('pName').value.trim(),
+        category: document.getElementById('pCategory').value,
+        price: parseFloat(document.getElementById('pPrice').value),
+        stock: parseInt(document.getElementById('pStock').value),
+        image: document.getElementById('pImage').value.trim() || null,
+        description: document.getElementById('pDescription').value.trim(),
+        featured: document.getElementById('pFeatured').checked,
+      };
+      if (!data.name || !data.category || isNaN(data.price)) {
+        errEl.textContent = 'Name, category, and price are required.';
+        errEl.classList.remove('hidden');
+        return;
+      }
+      btn.disabled = true;
+      btn.innerHTML = '<div class="spinner"></div>';
+      try {
+        if (id) { await api(`/products/${id}`, { method: 'PUT', body: JSON.stringify(data) }); }
+        else { await api('/products', { method: 'POST', body: JSON.stringify(data) }); }
+        closeProductModal();
+        Toast.show(id ? 'Product updated.' : 'Product added.', 'success');
+        await loadAdminProducts();
+      } catch(err) {
+        errEl.textContent = err.message || 'Save failed.';
+        errEl.classList.remove('hidden');
+      }
+      btn.disabled = false;
+      btn.innerHTML = 'Save Product';
+    }
+
+    async function deleteProduct(id, name) {
+      if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
+      try {
+        await api(`/products/${id}`, { method: 'DELETE' });
+        Toast.show('Product deleted.', 'info');
+        await loadAdminProducts();
+      } catch(err) {
+        Toast.show(err.message || 'Delete failed.', 'error');
+      }
+    }
+
+    // ---- Orders ----
+    async function loadAdminOrders() {
+      try {
+        adminOrders = await api('/admin/orders');
+        document.getElementById('ordersTable').innerHTML = `<table>
+          <thead><tr><th>Order #</th><th>Customer</th><th>Items</th><th>Total</th><th>Date</th><th>Status</th><th>Update</th></tr></thead>
+          <tbody>${adminOrders.map(o => `<tr>
+            <td style="font-weight:700">#${o.id}</td>
+            <td><div style="font-weight:600;font-size:0.875rem">${o.user?.name || '—'}</div><div style="font-size:0.78rem;color:var(--color-text-muted)">${o.user?.email || ''}</div></td>
+            <td>${o.items?.length || 0} item${o.items?.length !== 1 ? 's' : ''}</td>
+            <td style="font-weight:600">${formatCurrency(o.total)}</td>
+            <td style="font-size:0.85rem;color:var(--color-text-secondary)">${formatDate(o.createdAt)}</td>
+            <td>${statusBadge(o.status)}</td>
+            <td>
+              <select class="sort-select" style="font-size:0.8rem;padding:5px 8px" onchange="updateOrderStatus(${o.id}, this.value)">
+                ${['Processing','Shipped','Out for Delivery','Delivered','Cancelled'].map(s =>
+                  `<option value="${s}" ${s === o.status ? 'selected' : ''}>${s}</option>`).join('')}
+              </select>
+            </td>
+          </tr>`).join('')}</tbody>
+        </table>`;
+      } catch(e) {
+        document.getElementById('ordersTable').innerHTML = '<p class="text-error" style="padding:16px">Could not load orders.</p>';
+      }
+    }
+
+    async function updateOrderStatus(id, status) {
+      try {
+        await api(`/admin/orders/${id}/status`, { method: 'PUT', body: JSON.stringify({ status }) });
+        Toast.show(`Order #${id} updated to ${status}`, 'success');
+      } catch(err) {
+        Toast.show(err.message || 'Update failed.', 'error');
+      }
+    }
+
+    // ---- Sellers ----
+    async function loadAdminSellers() {
+      try {
+        const [sellers, pendingProducts] = await Promise.all([
+          api('/sellers/admin/all'),
+          api('/sellers/admin/pending-products'),
+        ]);
+
+        // Update sidebar badge
+        const pendingSellers = sellers.filter(s => s.status === 'Pending').length;
+        const totalPending = pendingSellers + pendingProducts.length;
+        const badge = document.getElementById('pendingSellersCount');
+        if (totalPending > 0) {
+          badge.textContent = totalPending;
+          badge.style.display = 'inline-flex';
+        } else {
+          badge.style.display = 'none';
+        }
+
+        // Pending product approvals
+        const ppContainer = document.getElementById('pendingProductsContainer');
+        const ppCount = document.getElementById('pendingProductCount');
+        ppCount.textContent = pendingProducts.length;
+
+        if (!pendingProducts.length) {
+          ppContainer.innerHTML = `
+            <div style="padding:24px;text-align:center;color:var(--color-text-muted)">
+              <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="margin-bottom:8px;opacity:0.4"><polyline points="20 6 9 17 4 12"/></svg>
+              <p>No pending product approvals — you're all caught up!</p>
+            </div>`;
+        } else {
+          ppContainer.innerHTML = `
+            <div style="display:grid;gap:12px;padding:16px">
+              ${pendingProducts.map(p => `
+                <div style="display:grid;grid-template-columns:auto 1fr auto;gap:16px;align-items:center;padding:14px;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-md)">
+                  <img src="${p.image || productImageSVG(p.category)}" alt="${p.name}"
+                    onerror="this.src='${productImageSVG()}'"
+                    style="width:56px;height:48px;object-fit:contain;border-radius:var(--radius-sm);background:#fff;border:1px solid var(--color-border);padding:4px"/>
+                  <div>
+                    <div style="font-weight:600;font-size:0.925rem">${p.name}</div>
+                    <div style="font-size:0.8rem;color:var(--color-text-muted);margin-top:2px">
+                      <span class="badge badge-blue">${p.category}</span>
+                      <span style="margin-left:6px">${formatCurrency(p.price)}</span>
+                      <span style="margin-left:6px">Stock: ${p.stock}</span>
+                      ${p.seller ? `<span style="margin-left:6px">· Seller: <strong>${p.seller.businessName || p.seller.name}</strong></span>` : ''}
+                    </div>
+                    ${p.description ? `<div style="font-size:0.8rem;color:var(--color-text-secondary);margin-top:4px;max-width:400px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">${p.description}</div>` : ''}
+                  </div>
+                  <div style="display:flex;flex-direction:column;gap:6px;min-width:120px">
+                    <button class="btn btn-sm" style="background:var(--color-success-bg);color:var(--color-success);border:1px solid #bbf7d0"
+                      onclick="approveSellerProduct(${p.id}, 'Approved')">
+                      ✓ Approve
+                    </button>
+                    <button class="btn btn-danger btn-sm"
+                      onclick="approveSellerProduct(${p.id}, 'Rejected')">
+                      ✕ Reject
+                    </button>
+                  </div>
+                </div>`).join('')}
+            </div>`;
+        }
+
+        // All sellers table
+        const sellersTable = document.getElementById('sellersTable');
+        if (!sellers.length) {
+          sellersTable.innerHTML = `
+            <div class="empty-state" style="padding:40px">
+              <svg width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+              <h3>No sellers yet</h3><p>Sellers who apply to join the marketplace will appear here.</p>
+            </div>`;
+          return;
+        }
+
+        sellersTable.innerHTML = `
+          <table>
+            <thead>
+              <tr>
+                <th>Business</th>
+                <th>Contact</th>
+                <th>Category</th>
+                <th>Applied</th>
+                <th>Status</th>
+                <th>Products</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${sellers.map(s => `
+                <tr>
+                  <td>
+                    <div style="font-weight:600;font-size:0.9rem">${s.businessName || '—'}</div>
+                    <div style="font-size:0.78rem;color:var(--color-text-muted)">${s.businessType || ''}</div>
+                  </td>
+                  <td>
+                    <div style="font-size:0.875rem">${s.user?.name || '—'}</div>
+                    <div style="font-size:0.78rem;color:var(--color-text-muted)">${s.user?.email || ''}</div>
+                  </td>
+                  <td><span class="badge badge-blue" style="font-size:0.75rem">${s.productCategory || '—'}</span></td>
+                  <td style="font-size:0.85rem;color:var(--color-text-secondary)">${formatDate(s.createdAt)}</td>
+                  <td>
+                    <span class="approval-pill ${
+                      s.status === 'Active' ? 'approved' :
+                      s.status === 'Suspended' ? 'rejected' :
+                      s.status === 'Rejected' ? 'rejected' : 'pending'
+                    }">${s.status}</span>
+                  </td>
+                  <td style="font-size:0.875rem;font-weight:600">${s.products?.length ?? 0}</td>
+                  <td style="white-space:nowrap">
+                    ${s.status === 'Pending' ? `
+                      <button class="btn btn-sm" style="background:var(--color-success-bg);color:var(--color-success);border:1px solid #bbf7d0;margin-right:4px"
+                        onclick="updateSellerStatus(${s.id}, 'Active')">Approve</button>
+                      <button class="btn btn-danger btn-sm"
+                        onclick="updateSellerStatus(${s.id}, 'Rejected')">Reject</button>
+                    ` : s.status === 'Active' ? `
+                      <button class="btn btn-ghost btn-sm"
+                        onclick="updateSellerStatus(${s.id}, 'Suspended')">Suspend</button>
+                    ` : s.status === 'Suspended' ? `
+                      <button class="btn btn-sm" style="background:var(--color-primary-light);color:var(--color-primary);border:1px solid #bfdbfe"
+                        onclick="updateSellerStatus(${s.id}, 'Active')">Reinstate</button>
+                    ` : `
+                      <span style="font-size:0.8rem;color:var(--color-text-muted)">—</span>
+                    `}
+                  </td>
+                </tr>`).join('')}
+            </tbody>
+          </table>`;
+      } catch(e) {
+        document.getElementById('pendingProductsContainer').innerHTML = '<p class="text-error" style="padding:16px">Could not load seller data.</p>';
+        document.getElementById('sellersTable').innerHTML = '';
+      }
+    }
+
+    async function updateSellerStatus(id, status) {
+      if (!confirm(`Set seller status to "${status}"?`)) return;
+      try {
+        await api(`/sellers/admin/${id}/status`, { method: 'PUT', body: JSON.stringify({ status }) });
+        Toast.show(`Seller ${status.toLowerCase()}.`, 'success');
+        loadAdminSellers();
+      } catch(err) {
+        Toast.show(err.message || 'Update failed.', 'error');
+      }
+    }
+
+    async function approveSellerProduct(id, status) {
+      const confirmMsg = status === 'Approved'
+        ? 'Approve this product? It will go live on the store.'
+        : 'Reject this product? The seller will need to resubmit.';
+      if (!confirm(confirmMsg)) return;
+      try {
+        await api(`/sellers/admin/products/${id}/approve`, { method: 'PUT', body: JSON.stringify({ approvalStatus: status }) });
+        Toast.show(`Product ${status.toLowerCase()}.`, status === 'Approved' ? 'success' : 'info');
+        loadAdminSellers();
+      } catch(err) {
+        Toast.show(err.message || 'Update failed.', 'error');
+      }
+    }
+
+    // ---- Returns ----
+    async function loadAdminReturns() {
+      try {
+        adminReturns = await api('/admin/returns');
+        const container = document.getElementById('returnsTable');
+        if (!adminReturns.length) {
+          container.innerHTML = '<div class="empty-state" style="padding:48px"><svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg><h3>No return requests</h3><p>Customer return requests will appear here.</p></div>';
+          return;
+        }
+        container.style.padding = '20px';
+        container.innerHTML = adminReturns.map(r => `
+          <div class="card mb-16" style="border-left:3px solid ${r.status === 'Requested' ? 'var(--color-warning)' : r.status === 'Approved' ? 'var(--color-success)' : r.status === 'Rejected' ? 'var(--color-error)' : 'var(--color-primary)'}">
+            <div class="card-body">
+              <div style="display:grid;grid-template-columns:1fr auto;gap:16px;align-items:start">
+                <div>
+                  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px">
+                    <span style="font-weight:700">Return #${r.id}</span>
+                    ${statusBadge(r.status)}
+                    <span style="font-size:0.8rem;color:var(--color-text-muted)">Order #${r.orderId} · ${formatDate(r.createdAt)}</span>
+                  </div>
+                  <div style="margin-bottom:8px">
+                    <span style="font-size:0.8rem;font-weight:600;color:var(--color-text-secondary)">CUSTOMER: </span>
+                    <span style="font-size:0.875rem;font-weight:600">${r.user?.name || '—'}</span>
+                    <span style="font-size:0.8rem;color:var(--color-text-muted)"> · ${r.user?.email || ''}</span>
+                  </div>
+                  <div style="background:var(--color-surface);border-radius:var(--radius-sm);padding:12px;font-size:0.875rem;color:var(--color-text-secondary);border:1px solid var(--color-border-light)">
+                    <strong style="color:var(--color-text);display:block;margin-bottom:4px;font-size:0.78rem;text-transform:uppercase;letter-spacing:0.4px">Return Reason</strong>
+                    ${r.reason}
+                  </div>
+                  ${r.adminNotes ? `<div style="margin-top:8px;font-size:0.8rem;color:var(--color-text-secondary)"><strong>Admin Notes:</strong> ${r.adminNotes}</div>` : ''}
+                </div>
+                <div style="display:flex;flex-direction:column;gap:8px;min-width:140px">
+                  ${r.status === 'Requested' ? `
+                    <button class="btn btn-sm" style="background:var(--color-success-bg);color:var(--color-success);border:1px solid #bbf7d0;width:100%" onclick="openReturnAction(${r.id},'Approved')">
+                      ✓ Approve
+                    </button>
+                    <button class="btn btn-danger btn-sm" style="width:100%" onclick="openReturnAction(${r.id},'Rejected')">
+                      ✕ Reject
+                    </button>
+                  ` : r.status === 'Approved' ? `
+                    <button class="btn btn-sm" style="background:var(--color-primary-light);color:var(--color-primary);border:1px solid #bfdbfe;width:100%" onclick="updateReturn(${r.id},'Refunded','')">
+                      Mark Refunded
+                    </button>
+                  ` : `<span class="badge ${r.status === 'Refunded' ? 'badge-green' : 'badge-gray'}" style="text-align:center">Final</span>`}
+                </div>
+              </div>
+            </div>
+          </div>`).join('');
+      } catch(e) {
+        document.getElementById('returnsTable').innerHTML = '<p class="text-error" style="padding:16px">Could not load returns.</p>';
+      }
+    }
+
+    function openReturnAction(id, action) {
+      const notes = action === 'Rejected'
+        ? prompt('Reason for rejection (optional — customer will see this):') || ''
+        : '';
+      if (action === 'Rejected' && notes === null) return; // cancelled
+      updateReturn(id, action, notes);
+    }
+
+    async function updateReturn(id, status, notes = '') {
+      try {
+        await api(`/admin/returns/${id}`, { method: 'PUT', body: JSON.stringify({ status, adminNotes: notes }) });
+        Toast.show(`Return #${id} marked as ${status}`, 'success');
+        await loadAdminReturns();
+      } catch(err) {
+        Toast.show(err.message || 'Update failed.', 'error');
+      }
+    }
+
+    // ---- Users ----
+    async function loadAdminUsers() {
+      try {
+        adminUsers = await api('/cms/users');
+        renderUsersTable(adminUsers);
+      } catch(e) {
+        document.getElementById('usersTable').innerHTML = '<p class="text-error" style="padding:16px">Could not load users.</p>';
+      }
+    }
+
+    function filterUsersTable() {
+      const q = (document.getElementById('userSearchInput')?.value || '').toLowerCase();
+      const filtered = q ? adminUsers.filter(u => u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)) : adminUsers;
+      renderUsersTable(filtered);
+    }
+
+    function renderUsersTable(users) {
+      const el = document.getElementById('usersTable');
+      if (!users.length) {
+        el.innerHTML = `<div class="empty-state" style="padding:40px">
+          <svg width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+          <h3>No users found</h3></div>`;
+        return;
+      }
+      const currentUser = Auth.getUser();
+      el.innerHTML = `<table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Joined</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${users.map(u => {
+            const isSelf = u.id === currentUser?.id;
+            const isAdmin = u.role === 'admin';
+            const roleColor = isAdmin ? 'badge-blue' : u.role === 'customer' ? 'badge-green' : 'badge-amber';
+            return `<tr>
+              <td>
+                <div style="font-weight:600;font-size:0.9rem">${u.name}</div>
+                ${isSelf ? '<div style="font-size:0.72rem;color:var(--color-primary);font-weight:600">You</div>' : ''}
+              </td>
+              <td style="font-size:0.875rem;color:var(--color-text-secondary)">${u.email}</td>
+              <td>
+                <select class="sort-select" style="font-size:0.8rem;padding:5px 8px;border-radius:var(--radius-sm)"
+                  onchange="changeUserRole(${u.id}, this.value, this)"
+                  ${isSelf ? 'disabled title="Cannot change your own role"' : ''}>
+                  <option value="customer" ${u.role === 'customer' ? 'selected' : ''}>Customer</option>
+                  <option value="admin" ${u.role === 'admin' ? 'selected' : ''}>Admin</option>
+                </select>
+              </td>
+              <td style="font-size:0.85rem;color:var(--color-text-secondary)">${formatDate(u.createdAt)}</td>
+              <td>
+                ${isSelf ? '<span style="font-size:0.8rem;color:var(--color-text-muted)">Protected</span>' : `
+                  <button class="btn btn-danger btn-sm"
+                    onclick="deleteUser(${u.id}, '${u.name.replace(/'/g, "\\'")}', '${u.role}')">
+                    Remove
+                  </button>`}
+              </td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>`;
+    }
+
+    async function changeUserRole(id, role, selectEl) {
+      const prev = selectEl.dataset.prev || selectEl.value;
+      try {
+        await api(`/cms/users/${id}/role`, { method: 'PUT', body: JSON.stringify({ role }) });
+        Toast.show(`Role updated to ${role}.`, 'success');
+        selectEl.dataset.prev = role;
+        // Refresh full list to sync state
+        adminUsers = adminUsers.map(u => u.id === id ? { ...u, role } : u);
+      } catch(err) {
+        Toast.show(err.message || 'Role change failed.', 'error');
+        selectEl.value = prev; // revert select
+      }
+    }
+
+    async function deleteUser(id, name, role) {
+      if (!confirm(`Remove user "${name}"?\n\nThis will permanently delete their account. This cannot be undone.`)) return;
+      try {
+        await api(`/cms/users/${id}`, { method: 'DELETE' });
+        Toast.show(`${name} has been removed.`, 'info');
+        await loadAdminUsers();
+      } catch(err) {
+        Toast.show(err.message || 'Delete failed.', 'error');
+      }
+    }
+
+    // ── Admin global search ────────────────────────────────────────────────────
+    let adminSearchTimer;
+    function onAdminSearch() {
+      clearTimeout(adminSearchTimer);
+      adminSearchTimer = setTimeout(runAdminSearch, 280);
+    }
+    function openAdminSearch() {
+      if (document.getElementById('adminSearchInput').value.trim()) runAdminSearch();
+    }
+    async function runAdminSearch() {
+      const q = document.getElementById('adminSearchInput').value.trim().toLowerCase();
+      const box = document.getElementById('adminSearchResults');
+      if (!q) { box.classList.remove('open'); return; }
+      box.classList.add('open');
+      box.innerHTML = '<div class="dash-sr-empty">Searching…</div>';
+
+      try {
+        // Products
+        const matchProducts = adminProducts.filter(p =>
+          p.name.toLowerCase().includes(q) || p.category.toLowerCase().includes(q)
+        ).slice(0, 4);
+
+        // Orders
+        const matchOrders = adminOrders.filter(o =>
+          String(o.id).includes(q) ||
+          (o.user?.name || '').toLowerCase().includes(q) ||
+          (o.user?.email || '').toLowerCase().includes(q) ||
+          (o.status || '').toLowerCase().includes(q)
+        ).slice(0, 4);
+
+        // Users
+        const matchUsers = adminUsers.filter(u =>
+          u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)
+        ).slice(0, 3);
+
+        // Returns
+        const matchReturns = adminReturns.filter(r =>
+          String(r.id).includes(q) ||
+          (r.user?.name || '').toLowerCase().includes(q) ||
+          (r.status || '').toLowerCase().includes(q)
+        ).slice(0, 3);
+
+        let html = '';
+
+        if (matchProducts.length) {
+          html += `<div class="dash-sr-section">Products</div>`;
+          html += matchProducts.map(p => `
+            <a class="dash-sr-item" href="#" onclick="showAdminTab('products',null);document.getElementById('adminSearchResults').classList.remove('open');return false;">
+              <div class="dash-sr-icon"><img src="${p.image || productImageSVG(p.category)}" style="width:28px;height:24px;object-fit:contain;" onerror="this.src='${productImageSVG()}'"/></div>
+              <div class="dash-sr-main"><div class="dash-sr-label">${p.name}</div><div class="dash-sr-sub">${p.category} · ${formatCurrency(p.price)} · Stock: ${p.stock}</div></div>
+            </a>`).join('');
+        }
+        if (matchOrders.length) {
+          html += `<div class="dash-sr-section">Orders</div>`;
+          html += matchOrders.map(o => `
+            <a class="dash-sr-item" href="#" onclick="showAdminTab('orders',null);document.getElementById('adminSearchResults').classList.remove('open');return false;">
+              <div class="dash-sr-icon"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/></svg></div>
+              <div class="dash-sr-main"><div class="dash-sr-label">Order #${o.id} — ${o.user?.name || '—'}</div><div class="dash-sr-sub">${formatDate(o.createdAt)} · ${formatCurrency(o.total)}</div></div>
+              <div class="dash-sr-badge">${statusBadge(o.status)}</div>
+            </a>`).join('');
+        }
+        if (matchUsers.length) {
+          html += `<div class="dash-sr-section">Users</div>`;
+          html += matchUsers.map(u => `
+            <a class="dash-sr-item" href="#" onclick="showAdminTab('users',null);document.getElementById('adminSearchResults').classList.remove('open');return false;">
+              <div class="dash-sr-icon"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+              <div class="dash-sr-main"><div class="dash-sr-label">${u.name}</div><div class="dash-sr-sub">${u.email}</div></div>
+              <div class="dash-sr-badge"><span class="badge ${u.role==='admin'?'badge-blue':'badge-green'}">${u.role}</span></div>
+            </a>`).join('');
+        }
+        if (matchReturns.length) {
+          html += `<div class="dash-sr-section">Returns</div>`;
+          html += matchReturns.map(r => `
+            <a class="dash-sr-item" href="#" onclick="showAdminTab('returns',null);document.getElementById('adminSearchResults').classList.remove('open');return false;">
+              <div class="dash-sr-icon"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg></div>
+              <div class="dash-sr-main"><div class="dash-sr-label">Return #${r.id} · Order #${r.orderId}</div><div class="dash-sr-sub">${r.user?.name || '—'} · ${formatDate(r.createdAt)}</div></div>
+              <div class="dash-sr-badge">${statusBadge(r.status)}</div>
+            </a>`).join('');
+        }
+
+        if (!html) html = `<div class="dash-sr-empty">No results for "<strong>${q}</strong>"</div>`;
+        box.innerHTML = html;
+      } catch(e) {
+        box.innerHTML = '<div class="dash-sr-empty">Search unavailable.</div>';
+      }
+    }
+
+    document.addEventListener('click', e => {
+      if (!e.target.closest('.dash-search-wrap')) {
+        document.getElementById('adminSearchResults')?.classList.remove('open');
+      }
+    });
+
+    // ── Admin drawer (mobile) ──────────────────────────────────────────────────
+    function toggleAdminDrawer() {
+      const sidebar = document.querySelector('.admin-sidebar');
+      const overlay = document.getElementById('adminDrawerOverlay');
+      const icon    = document.getElementById('adminHamburgerIcon');
+      const isOpen  = sidebar.classList.toggle('drawer-open');
+      overlay.classList.toggle('open', isOpen);
+      icon.innerHTML = isOpen
+        ? '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>'
+        : '<line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>';
+    }
+    function closeAdminDrawer() {
+      document.querySelector('.admin-sidebar')?.classList.remove('drawer-open');
+      document.getElementById('adminDrawerOverlay')?.classList.remove('open');
+      const icon = document.getElementById('adminHamburgerIcon');
+      if (icon) icon.innerHTML = '<line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>';
+    }
+    // Close drawer when a nav item is clicked on mobile
+    document.addEventListener('click', e => {
+      if (window.innerWidth <= 900 && (e.target.closest('.admin-nav a') || e.target.closest('.admin-nav button'))) {
+        setTimeout(closeAdminDrawer, 120);
+      }
+    });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeAdminDrawer(); });
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (!Auth.isLoggedIn() || !Auth.isAdmin()) {
+        window.location.href = Auth.isLoggedIn() ? '/dashboard' : '/login';
+        return;
+      }
+      document.getElementById('adminWrap').style.display = 'block';
+      document.getElementById('adminTopbarName').textContent = Auth.getUser()?.name || 'Admin';
+      loadOverview();
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Wallet & Payments — Seller Portal</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"/>
+  <link rel="stylesheet" href="/css/style.css"/>
+</head>
+<body>
+  <div id="nav-placeholder"></div>
+  <div id="sellerWrap" style="display:none">
+    <div class="seller-layout">
+      <aside class="seller-sidebar">
+        <div class="seller-logo"><img src="/images/logo.png" alt="Northstar"/><span class="seller-label">Seller Portal</span></div>
+        <nav class="seller-nav">
+          <span class="nav-section">Dashboard</span>
+          <a href="/seller/dashboard"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Overview</a>
+          <span class="nav-section">Store</span>
+          <a href="/seller/products"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/></svg>My Products</a>
+          <a href="/seller/orders"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/></svg>Orders</a>
+          <a href="/seller/wallet" class="active"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>Wallet</a>
+          <a href="/seller/analytics"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Analytics</a>
+          <span class="nav-section">Account</span>
+          <a href="/seller/settings">Settings</a>
+          <a href="/">← Back to Store</a>
+          <button onclick="logout()">Sign Out</button>
+        </nav>
+      </aside>
+      <main class="seller-main">
+        <div style="margin-bottom:28px"><h2 style="font-size:1.4rem;margin-bottom:4px">Wallet & Payments</h2><p class="text-secondary">Manage your earnings and withdrawals</p></div>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;margin-bottom:32px" id="walletStats">
+          <div class="loading-overlay"><div class="spinner"></div></div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 360px;gap:24px;flex-wrap:wrap" id="walletLayout">
+          <div>
+            <div class="card">
+              <div class="card-header"><h3 style="font-size:1rem">Withdrawal History</h3></div>
+              <div class="table-wrap" id="withdrawalTable"><div class="loading-overlay"><div class="spinner"></div></div></div>
+            </div>
+          </div>
+          <div>
+            <div class="card">
+              <div class="card-header"><h3 style="font-size:1rem">Request Withdrawal</h3></div>
+              <div class="card-body">
+                <div id="withdrawError" class="alert alert-error hidden mb-16"></div>
+                <div id="withdrawSuccess" class="alert alert-success hidden mb-16"></div>
+                <div class="form-group"><label class="form-label">Amount ($)</label><input type="number" id="withdrawAmount" class="form-input" placeholder="0.00" min="1" step="0.01"/></div>
+                <div class="form-group"><label class="form-label">Payment Method</label>
+                  <select id="withdrawMethod" class="form-select">
+                    <option>Bank Transfer</option>
+                    <option>PayPal</option>
+                    <option>Check</option>
+                  </select>
+                </div>
+                <button class="btn btn-primary btn-block" id="withdrawBtn" onclick="requestWithdrawal()">Request Withdrawal</button>
+                <p style="font-size:0.78rem;color:var(--color-text-muted);margin-top:12px;text-align:center">Processing takes 2-3 business days. Minimum withdrawal: $10.00</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+  <div id="footer-placeholder"></div>
+  <script src="/js/app.js"></script>
+  <script>
+    let sellerData = null;
+    async function load() {
+      if (!Auth.isLoggedIn()) { window.location.href = '/login?redirect=/seller/wallet'; return; }
+      document.getElementById('sellerWrap').style.display = 'block';
+      try {
+        sellerData = await api('/sellers/me');
+        document.getElementById('walletStats').innerHTML = `
+          <div class="stat-card" style="background:#fff;border:1px solid var(--color-border);border-radius:var(--radius-md);padding:20px"><div class="stat-label">Available Balance</div><div class="stat-value text-success">${formatCurrency(sellerData.walletBalance)}</div><div class="stat-sub">Ready to withdraw</div></div>
+          <div class="stat-card" style="background:#fff;border:1px solid var(--color-border);border-radius:var(--radius-md);padding:20px"><div class="stat-label">Total Earned</div><div class="stat-value">${formatCurrency(sellerData.totalSales)}</div><div class="stat-sub">Lifetime</div></div>
+          <div class="stat-card" style="background:#fff;border:1px solid var(--color-border);border-radius:var(--radius-md);padding:20px"><div class="stat-label">Commission Rate</div><div class="stat-value">${sellerData.commissionRate}%</div><div class="stat-sub">Per sale</div></div>`;
+
+        const withdrawals = await api('/sellers/withdrawals');
+        const tbl = document.getElementById('withdrawalTable');
+        if (!withdrawals.length) { tbl.innerHTML = '<div style="padding:24px;text-align:center;color:var(--color-text-muted)">No withdrawal requests yet</div>'; return; }
+        tbl.innerHTML = `<table><thead><tr><th>#</th><th>Amount</th><th>Method</th><th>Date</th><th>Status</th></tr></thead><tbody>
+          ${withdrawals.map(w => `<tr><td>#${w.id}</td><td style="font-weight:600">${formatCurrency(w.amount)}</td><td>${w.method}</td><td>${formatDate(w.createdAt)}</td><td>${statusBadge(w.status)}</td></tr>`).join('')}
+          </tbody></table>`;
+      } catch(e) {
+        if (e.status === 404) { document.getElementById('walletStats').innerHTML = '<div class="alert alert-info" style="grid-column:1/-1">You need a seller account. <a href="/seller/register">Register →</a></div>'; }
+      }
+    }
+
+    async function requestWithdrawal() {
+      const btn = document.getElementById('withdrawBtn');
+      const errEl = document.getElementById('withdrawError');
+      const succEl = document.getElementById('withdrawSuccess');
+      errEl.classList.add('hidden'); succEl.classList.add('hidden');
+      const amount = parseFloat(document.getElementById('withdrawAmount').value);
+      if (!amount || amount < 10) { errEl.textContent = 'Minimum withdrawal is $10.00'; errEl.classList.remove('hidden'); return; }
+      if (sellerData && amount > parseFloat(sellerData.walletBalance)) { errEl.textContent = `Insufficient balance. Available: ${formatCurrency(sellerData.walletBalance)}`; errEl.classList.remove('hidden'); return; }
+      btn.disabled = true; btn.innerHTML = '<div class="spinner"></div> Processing…';
+      try {
+        await api('/sellers/withdraw', { method: 'POST', body: JSON.stringify({ amount, method: document.getElementById('withdrawMethod').value }) });
+        succEl.textContent = `Withdrawal of ${formatCurrency(amount)} requested. You'll receive it in 2-3 business days.`;
+        succEl.classList.remove('hidden');
+        document.getElementById('withdrawAmount').value = '';
+        await load();
+      } catch(err) { errEl.textContent = err.message || 'Request failed'; errEl.classList.remove('hidden'); }
+      btn.disabled = false; btn.innerHTML = 'Request Withdrawal';
+    }
+
+    document.addEventListener('DOMContentLoaded', load);
+  </script>
+</body>
+</html>

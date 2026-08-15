@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Product — Northstar Electronics</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"/>
+  <link rel="stylesheet" href="/css/style.css"/>
+  <style>
+    .detail-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: start; padding: 48px 0; }
+    .product-gallery { position: sticky; top: calc(var(--nav-height) + 20px); }
+    .main-img-wrap { background: var(--color-surface); border-radius: var(--radius-xl); border: 1px solid var(--color-border); overflow: hidden; aspect-ratio: 4/3; display: flex; align-items: center; justify-content: center; padding: 40px; margin-bottom: 16px; }
+    .main-img-wrap img { max-height: 300px; object-fit: contain; }
+    .product-meta { margin-bottom: 8px; }
+    .product-meta .category-link { color: var(--color-primary); font-size: 0.875rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+    .product-detail-name { font-size: clamp(1.4rem, 3vw, 2rem); margin: 8px 0 16px; }
+    .product-detail-price { font-size: 2rem; font-weight: 800; color: var(--color-text); margin-bottom: 20px; }
+    .product-description { color: var(--color-text-secondary); line-height: 1.75; margin-bottom: 24px; }
+    .qty-control { display: flex; align-items: center; gap: 0; border: 1.5px solid var(--color-border); border-radius: var(--radius-sm); overflow: hidden; width: fit-content; }
+    .qty-btn { width: 40px; height: 40px; background: var(--color-surface); border: none; cursor: pointer; font-size: 1.1rem; transition: background var(--transition); }
+    .qty-btn:hover { background: var(--color-surface-2); }
+    .qty-val { width: 52px; height: 40px; text-align: center; border: none; border-left: 1.5px solid var(--color-border); border-right: 1.5px solid var(--color-border); font-size: 0.95rem; font-weight: 600; outline: none; }
+    .add-to-cart-section { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 24px; }
+    .related-section { padding: 48px 0; border-top: 1px solid var(--color-border); }
+
+    /* Reviews */
+    .reviews-section { padding: 48px 0; border-top: 1px solid var(--color-border); }
+    .star-display { display: inline-flex; gap: 2px; }
+    .star-display svg { fill: #f59e0b; stroke: #f59e0b; }
+    .star-display svg.empty { fill: none; stroke: #d1d5db; }
+    .review-form-stars { display: flex; gap: 4px; cursor: pointer; }
+    .review-form-stars svg { width: 28px; height: 28px; fill: #e5e7eb; stroke: #d1d5db; transition: fill 0.1s; }
+    .review-form-stars svg.active, .review-form-stars svg:hover, .review-form-stars svg:hover ~ svg { fill: #f59e0b; stroke: #f59e0b; }
+    .review-form-stars svg.active { fill: #f59e0b; stroke: #f59e0b; }
+    .review-card { padding: 18px 0; border-bottom: 1px solid var(--color-border-light); }
+    .review-card:last-child { border-bottom: none; }
+    .reviewer-name { font-weight: 600; font-size: 0.9rem; }
+    .review-date { font-size: 0.78rem; color: var(--color-text-muted); margin-left: 8px; }
+    .review-body { font-size: 0.9rem; color: var(--color-text-secondary); margin-top: 6px; line-height: 1.65; }
+    .rating-summary { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; }
+    .rating-big { font-size: 2.5rem; font-weight: 800; line-height: 1; }
+    .rating-bars { flex: 1; max-width: 220px; }
+    .rating-bar-row { display: flex; align-items: center; gap: 8px; font-size: 0.78rem; color: var(--color-text-muted); margin-bottom: 3px; }
+    .rating-bar-track { flex: 1; height: 6px; background: var(--color-border); border-radius: 99px; overflow: hidden; }
+    .rating-bar-fill { height: 100%; background: #f59e0b; border-radius: 99px; }
+
+    @media (max-width: 768px) {
+      .detail-layout { grid-template-columns: 1fr; gap: 32px; padding: 24px 0; }
+      .product-gallery { position: static; }
+    }
+  </style>
+</head>
+<body>
+  <div id="nav-placeholder"></div>
+  <div class="page-wrapper">
+    <div class="container">
+      <div id="productContent"><div class="loading-overlay"><div class="spinner"></div> Loading product…</div></div>
+    </div>
+
+    <div class="container related-section" id="relatedSection" style="display:none">
+      <h2 style="margin-bottom:24px">You Might Also Like</h2>
+      <div class="product-grid" id="relatedGrid"></div>
+    </div>
+
+    <div class="container reviews-section" id="reviewsSection" style="display:none">
+      <h2 style="margin-bottom:24px">Customer Reviews</h2>
+      <div id="reviewsContent"></div>
+
+      <!-- Write a Review -->
+      <div id="reviewFormWrap" style="margin-top:32px;display:none">
+        <div class="card card-body" style="max-width:600px">
+          <h3 style="font-size:1rem;margin-bottom:16px">Write a Review</h3>
+          <div id="reviewFormError" class="alert alert-error hidden mb-12"></div>
+          <div id="reviewFormSuccess" class="alert alert-success hidden mb-12"></div>
+          <div class="form-group">
+            <label class="form-label">Rating *</label>
+            <div class="review-form-stars" id="starPicker" role="group" aria-label="Star rating">
+              <svg data-star="1" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              <svg data-star="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              <svg data-star="3" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              <svg data-star="4" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              <svg data-star="5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="reviewTitleInput">Review Title</label>
+            <input type="text" id="reviewTitleInput" class="form-input" placeholder="Summarize your experience…" maxlength="120"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="reviewBodyInput">Your Review *</label>
+            <textarea id="reviewBodyInput" class="form-textarea" rows="4" placeholder="Share details about your experience with this product…"></textarea>
+          </div>
+          <button class="btn btn-primary" id="submitReviewBtn" onclick="submitReview()">Submit Review</button>
+        </div>
+      </div>
+      <div id="reviewLoginPrompt" style="display:none;margin-top:20px">
+        <div class="alert alert-info">
+          <a href="/login" style="font-weight:600">Sign in</a> to leave a review for this product.
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="footer-placeholder"></div>
+  <script src="/js/app.js"></script>
+  <script>
+    const productId = window.location.pathname.split('/product/')[1];
+    let currentProduct = null;
+    let selectedRating = 0;
+
+    async function loadProduct() {
+      try {
+        const p = await api(`/products/${productId}`);
+        currentProduct = p;
+        document.title = `${p.name} — Northstar Electronics`;
+
+        const img = p.image || productImageSVG(p.category);
+        const inStock = p.stock > 0;
+
+        document.getElementById('productContent').innerHTML = `
+          <div class="breadcrumb">
+            <a href="/">Home</a> ›
+            <a href="/products">Products</a> ›
+            <a href="/products?category=${p.category}">${p.category}</a> ›
+            <span>${p.name}</span>
+          </div>
+          <div class="detail-layout">
+            <div class="product-gallery">
+              <div class="main-img-wrap">
+                <img src="${img}" alt="${p.name}" onerror="this.src='${productImageSVG(p.category)}'"/>
+              </div>
+            </div>
+            <div class="product-info-panel">
+              <div class="product-meta">
+                <a href="/products?category=${p.category}" class="category-link">${p.category}</a>
+              </div>
+              <h1 class="product-detail-name">${p.name}</h1>
+              <div class="product-detail-price">${formatCurrency(p.price)}</div>
+              <span class="stock-badge ${inStock ? 'in-stock' : 'out-of-stock'}" style="font-size:0.875rem;padding:5px 12px">
+                ${inStock ? `● In Stock${p.stock < 5 ? ` — Only ${p.stock} left!` : ''}` : '● Out of Stock'}
+              </span>
+              <p class="product-description mt-24">${p.description || 'No description available.'}</p>
+              <hr class="divider"/>
+              ${inStock ? `
+              <div>
+                <p style="font-size:0.875rem;font-weight:600;margin-bottom:10px">Quantity</p>
+                <div class="qty-control">
+                  <button class="qty-btn" onclick="changeQty(-1)">−</button>
+                  <input class="qty-val" id="qtyInput" type="number" value="1" min="1" max="${p.stock}"/>
+                  <button class="qty-btn" onclick="changeQty(1)">+</button>
+                </div>
+              </div>
+              <div class="add-to-cart-section">
+                <button class="btn btn-primary btn-lg" onclick="addToCart()">
+                  <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+                  Add to Cart
+                </button>
+                <a href="/cart" class="btn btn-outline btn-lg">View Cart</a>
+              </div>
+              ` : `
+              <div class="alert alert-error mt-24">
+                This product is currently out of stock. Check back soon or browse similar products below.
+              </div>
+              `}
+              <div style="margin-top:24px;padding:16px;background:var(--color-surface);border-radius:var(--radius-md);border:1px solid var(--color-border)">
+                <div style="display:flex;flex-direction:column;gap:10px;font-size:0.875rem">
+                  <div style="display:flex;gap:10px;align-items:center"><svg width="16" height="16" fill="none" stroke="var(--color-success)" stroke-width="2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Free shipping on orders over $99</div>
+                  <div style="display:flex;gap:10px;align-items:center"><svg width="16" height="16" fill="none" stroke="var(--color-success)" stroke-width="2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> 14-day hassle-free returns</div>
+                  <div style="display:flex;gap:10px;align-items:center"><svg width="16" height="16" fill="none" stroke="var(--color-success)" stroke-width="2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> 1-year manufacturer warranty</div>
+                </div>
+              </div>
+            </div>
+          </div>`;
+
+        loadRelated(p.category, p.id);
+        loadReviews();
+      } catch(e) {
+        document.getElementById('productContent').innerHTML = '<div class="alert alert-error mt-32">Product not found.</div>';
+      }
+    }
+
+    function changeQty(delta) {
+      const input = document.getElementById('qtyInput');
+      const newVal = Math.max(1, Math.min(parseInt(input.value) + delta, currentProduct.stock));
+      input.value = newVal;
+    }
+
+    function addToCart() {
+      const qty = parseInt(document.getElementById('qtyInput').value) || 1;
+      Cart.add(currentProduct, qty);
+      Toast.show(`${currentProduct.name} added to cart`, 'success');
+    }
+
+    async function loadRelated(category, excludeId) {
+      try {
+        const { rows } = await api(`/products?category=${encodeURIComponent(category)}&limit=4`);
+        const related = rows.filter(p => p.id !== parseInt(excludeId)).slice(0, 4);
+        if (!related.length) return;
+        document.getElementById('relatedSection').style.display = 'block';
+        document.getElementById('relatedGrid').innerHTML = related.map(p => {
+          const img = p.image || productImageSVG(p.category);
+          const inStock = p.stock > 0;
+          return `
+          <div class="card product-card" onclick="window.location='/product/${p.id}'">
+            <img class="product-img" src="${img}" alt="${p.name}" onerror="this.src='${productImageSVG(p.category)}'"/>
+            <div class="product-info">
+              <p class="product-category">${p.category}</p>
+              <h4 class="product-name">${p.name}</h4>
+              <p class="product-price">${formatCurrency(p.price)}</p>
+              <div class="flex-between"><span class="stock-badge ${inStock ? 'in-stock' : 'out-of-stock'}">${inStock ? '● In Stock' : '● Out of Stock'}</span></div>
+            </div>
+          </div>`;
+        }).join('');
+      } catch(e) {}
+    }
+
+    async function loadReviews() {
+      try {
+        const { reviews } = await api(`/reviews/product/${productId}`);
+        const section = document.getElementById('reviewsSection');
+        section.style.display = 'block';
+
+        const content = document.getElementById('reviewsContent');
+
+        // Build rating summary
+        const total = reviews.length;
+        const avg = total ? (reviews.reduce((s, r) => s + r.rating, 0) / total) : 0;
+        const counts = [5,4,3,2,1].map(n => ({ n, c: reviews.filter(r => r.rating === n).length }));
+
+        function starSVGs(rating) {
+          let html = '<span class="star-display">';
+          for (let i = 1; i <= 5; i++) {
+            html += `<svg width="14" height="14" viewBox="0 0 24 24" class="${i <= rating ? '' : 'empty'}"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
+          }
+          return html + '</span>';
+        }
+
+        if (!total) {
+          content.innerHTML = `
+            <div style="color:var(--color-text-muted);font-size:0.9rem;padding:16px 0">
+              No reviews yet. Be the first to review this product!
+            </div>`;
+        } else {
+          content.innerHTML = `
+            <div class="rating-summary">
+              <div style="text-align:center">
+                <div class="rating-big">${avg.toFixed(1)}</div>
+                <div style="margin-top:4px">${starSVGs(Math.round(avg))}</div>
+                <div style="font-size:0.78rem;color:var(--color-text-muted);margin-top:4px">${total} review${total !== 1 ? 's' : ''}</div>
+              </div>
+              <div class="rating-bars">
+                ${counts.map(({ n, c }) => `
+                  <div class="rating-bar-row">
+                    <span style="width:10px;text-align:right">${n}</span>
+                    <div class="rating-bar-track"><div class="rating-bar-fill" style="width:${total ? Math.round((c/total)*100) : 0}%"></div></div>
+                    <span style="width:18px">${c}</span>
+                  </div>`).join('')}
+              </div>
+            </div>
+            <div id="reviewCards">
+              ${reviews.map(r => `
+                <div class="review-card">
+                  <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px">
+                    ${starSVGs(r.rating)}
+                    <span class="reviewer-name" style="margin-left:6px">${r.user?.name || 'Customer'}</span>
+                    <span class="review-date">${formatDate(r.createdAt)}</span>
+                  </div>
+                  ${r.title ? `<div style="font-weight:600;margin-top:6px;font-size:0.9rem">${r.title}</div>` : ''}
+                  <div class="review-body">${r.body}</div>
+                </div>`).join('')}
+            </div>`;
+        }
+
+        // Show write-review UI or login prompt
+        if (Auth.isLoggedIn()) {
+          document.getElementById('reviewFormWrap').style.display = 'block';
+          initStarPicker();
+        } else {
+          document.getElementById('reviewLoginPrompt').style.display = 'block';
+        }
+      } catch(e) {
+        // Reviews non-critical — just hide section on error
+      }
+    }
+
+    function initStarPicker() {
+      const stars = document.querySelectorAll('#starPicker svg');
+      stars.forEach(star => {
+        star.addEventListener('mouseenter', () => highlightStars(parseInt(star.dataset.star)));
+        star.addEventListener('mouseleave', () => highlightStars(selectedRating));
+        star.addEventListener('click', () => {
+          selectedRating = parseInt(star.dataset.star);
+          highlightStars(selectedRating);
+        });
+      });
+    }
+
+    function highlightStars(n) {
+      document.querySelectorAll('#starPicker svg').forEach((s, i) => {
+        s.classList.toggle('active', i < n);
+      });
+    }
+
+    async function submitReview() {
+      const btn = document.getElementById('submitReviewBtn');
+      const errEl = document.getElementById('reviewFormError');
+      const succEl = document.getElementById('reviewFormSuccess');
+      errEl.classList.add('hidden');
+      succEl.classList.add('hidden');
+
+      const body = document.getElementById('reviewBodyInput').value.trim();
+      const title = document.getElementById('reviewTitleInput').value.trim();
+
+      if (!selectedRating) {
+        errEl.textContent = 'Please select a star rating.';
+        errEl.classList.remove('hidden');
+        return;
+      }
+      if (!body || body.length < 5) {
+        errEl.textContent = 'Please write at least a few words for your review.';
+        errEl.classList.remove('hidden');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = '<div class="spinner"></div> Submitting…';
+
+      try {
+        await api('/reviews', {
+          method: 'POST',
+          body: JSON.stringify({ productId: parseInt(productId), rating: selectedRating, title, body }),
+        });
+        succEl.textContent = '✓ Review submitted! Thank you for your feedback.';
+        succEl.classList.remove('hidden');
+        document.getElementById('reviewBodyInput').value = '';
+        document.getElementById('reviewTitleInput').value = '';
+        selectedRating = 0;
+        highlightStars(0);
+        await loadReviews();
+      } catch(err) {
+        errEl.textContent = err.message || 'Could not submit review.';
+        errEl.classList.remove('hidden');
+      }
+      btn.disabled = false;
+      btn.innerHTML = 'Submit Review';
+    }
+
+    loadProduct();
+  </script>
+</body>
+</html>
