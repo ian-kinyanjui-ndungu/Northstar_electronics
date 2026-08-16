@@ -161,8 +161,8 @@ northstar-electronics/
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/<your-org>/northstar-electronics.git
-cd northstar-electronics
+https://github.com/ian-kinyanjui-ndungu/Northstar_electronics.git
+cd Northstar_electronics
 ```
 
 ### 2. Install dependencies
