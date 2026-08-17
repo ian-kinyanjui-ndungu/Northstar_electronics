@@ -21,12 +21,48 @@
       inset: 0;
       background: radial-gradient(ellipse at 70% 50%, rgba(37,99,235,0.3) 0%, transparent 60%);
     }
-    .hero-inner { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: center; position: relative; }
-    .hero-eyebrow { display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.85); font-size: 0.8rem; font-weight: 600; padding: 5px 12px; border-radius: var(--radius-full); margin-bottom: 20px; letter-spacing: 0.5px; text-transform: uppercase; border: 1px solid rgba(255,255,255,0.15); }
-    .hero h1 { color: #fff; margin-bottom: 20px; font-size: clamp(2rem, 4.5vw, 3.25rem); letter-spacing: -1px; }
-    .hero h1 em { color: #93c5fd; font-style: normal; }
-    .hero p { color: rgba(255,255,255,0.75); font-size: 1.1rem; margin-bottom: 36px; max-width: 480px; }
-    .hero-actions { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+    .hero-inner { 
+      display: grid; 
+      grid-template-columns: 1fr 1fr;
+      gap: 56px; 
+      align-items: center; 
+      position: relative; 
+    }
+    .hero-eyebrow { 
+      display: inline-flex; 
+      align-items: center; 
+      gap: 8px; background: rgba(255,255,255,0.1); 
+      color: rgba(255,255,255,0.85); 
+      font-size: 0.8rem; 
+      font-weight: 600; 
+      padding: 5px 12px; 
+      border-radius: var(--radius-full); 
+      margin-bottom: 20px; 
+      letter-spacing: 0.5px; 
+      text-transform: uppercase; 
+      border: 1px solid rgba(255,255,255,0.15); 
+    }
+    .hero h1 { 
+      color: #fff; 
+      margin-bottom: 20px; 
+      font-size: clamp(2rem, 4.5vw, 3.25rem); 
+      letter-spacing: -1px; 
+    }
+    .hero h1 em { 
+      color: #93c5fd; 
+      font-style: normal; 
+    }
+    .hero p { 
+      color: rgba(255,255,255,0.75); 
+      font-size: 1.1rem; 
+      margin-bottom: 36px; 
+      max-width: 480px; 
+    }
+    .hero-actions { 
+      display: flex; gap: 14px; 
+      align-items: center; 
+      flex-wrap: wrap; 
+    }
     .btn-hero { padding: 14px 28px; font-size: 1rem; background: #fff; color: var(--color-primary); border-color: #fff; }
     .btn-hero:hover { background: #f0f7ff; color: var(--color-primary-hover); }
     .btn-hero-outline { padding: 14px 28px; font-size: 1rem; border-color: rgba(255,255,255,0.4); color: #fff; background: transparent; }
