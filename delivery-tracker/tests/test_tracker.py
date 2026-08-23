@@ -58,6 +58,20 @@ def test_missing_package_returns_none():
     assert store.get("does-not-exist") is None
 
 
+def test_webhook_receiver_rejects_out_of_range_latitude():
+    receiver = WebhookReceiver()
+    ok, msg = receiver.handle_update("PKG-C", 999.0, 36.8167)
+    assert ok is False
+    assert "out of valid range" in msg
+
+
+def test_webhook_receiver_rejects_out_of_range_longitude():
+    receiver = WebhookReceiver()
+    ok, msg = receiver.handle_update("PKG-D", -1.2833, 5000.0)
+    assert ok is False
+    assert "out of valid range" in msg
+
+
 if __name__ == "__main__":
     tests = [v for k, v in globals().items() if k.startswith("test_")]
     passed = 0
